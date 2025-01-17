@@ -59,15 +59,46 @@
 
 /* Header and Footer */
 header {
-  background-color: #333;
+  background-color: #0d5139;
   color: white;
   padding: 1rem 0;
   text-align: center;
 }
 
-footer {
-  background-color: #333;
+header nav ul {
+  list-style: none;
+  padding: 0;
+}
+
+header nav ul li {
+  display: inline;
+  margin: 0 10px;
+}
+
+header nav ul li a {
   color: white;
+  text-decoration: none;
+}
+
+footer {
   text-align: center;
   padding: 1rem 0;
+  background: #0d5139;
+  color: white;
+  margin-top: 2rem;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  line-height: 1.6;
+  color: #333;
+}
+
+main {
+  padding: 1rem;
+}
+
+section {
+  margin: 2rem 0;
 }
