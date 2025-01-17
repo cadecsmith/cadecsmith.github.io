@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Personal Fishing Database | Cade Smith</title>
+    <link rel="stylesheet" href="stylesTest.css" />
+    <script
+      type="module"
+      src="https://js.arcgis.com/embeddable-components/4.31/arcgis-embeddable-components.esm.js"
+    ></script>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <h1>Cade Smith</h1>
+        <ul>
+          <li><a href="index.html">About Me</a></li>
+          <li><a href="projects.html">Projects</a></li>
+          <li><a href="resume.html">Resume</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <arcgis-embedded-map
+        style="height: 600px; width: 700px"
+        item-id="f3e75e2251a3432ca3086889c485d010"
+        theme="light"
+        portal-url="https://byu.maps.arcgis.com"
+        heading-enabled
+        legend-enabled
+        information-enabled
+      ></arcgis-embedded-map>
+    </main>
+  </body>
+</html>
