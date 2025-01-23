@@ -59,10 +59,11 @@
 
 /* Header and Footer */
 header {
-  background-color: #0d5139;
+  background-color: #2f3e46;
   color: white;
   padding: 1rem 0;
   text-align: center;
+  height: fit-content;
 }
 
 header nav ul {
@@ -83,9 +84,25 @@ header nav ul li a {
 footer {
   text-align: center;
   padding: 1rem 0;
-  background: #0d5139;
+  background: #2f3e46;
   color: white;
   margin-top: 2rem;
+  position: bottom;
+  height: fit-content;
+}
+footer nav ul {
+  list-style: none;
+  padding: 0;
+}
+
+footer nav ul li {
+  display: inline;
+  margin: 0 10px;
+}
+
+footer nav ul li a {
+  color: white;
+  text-decoration: none;
 }
 
 body {
@@ -101,4 +118,32 @@ main {
 
 section {
   margin: 2rem 0;
+}
+
+#about {
+  display: flex;
+  flex-direction: column; /* Stack items vertically */
+  gap: 1rem;
+}
+
+#about h2 {
+  margin-bottom: 0; /* Ensure no extra space after the title */
+}
+
+.about-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem; /* Space between image and paragraph */
+}
+
+.about-content img {
+  max-width: 200px; /* Set a maximum size for the image */
+  height: auto;
+  border-radius: 5%; /* Circular image */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.about-content p {
+  flex: 1; /* Allow the paragraph to take the remaining space */
+  margin: 0;
 }
