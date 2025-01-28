@@ -158,3 +158,33 @@ section {
   flex: 1; /* Allow the paragraph to take the remaining space */
   margin: 0;
 }
+
+.section-title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.resume-section {
+  margin-bottom: 2rem;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.skills-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.skills-list li {
+  background: #e8f0fe;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  text-align: center;
+  font-size: 0.9rem;
+}
