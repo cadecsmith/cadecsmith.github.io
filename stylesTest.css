@@ -18,14 +18,21 @@
   justify-items: center;
 }
 
+#project {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto; /* Centers the map */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 #project img {
-  max-width: 100%; /* Ensures the image doesn't exceed the container's width */
+  width: auto; /* Makes the image take the full width of the div */
   height: auto; /* Maintains the aspect ratio */
-  width: 300px; /* Sets a reasonable default width */
-  border: 1px solid #ddd; /* Optional: Add a border for styling */
-  border-radius: 8px; /* Optional: Add rounded corners */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for better aesthetics */
-  margin: 1rem 0; /* Optional: Add spacing around the image */
+  display: block; /* Removes extra spacing below the image */
+  max-height: 80vh; /* Ensures it doesn't overflow the viewport */
+  object-fit: contain; /* Ensures the entire image is visible */
 }
 
 /* Project Cards */
