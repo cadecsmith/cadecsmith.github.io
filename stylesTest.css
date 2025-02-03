@@ -202,14 +202,11 @@ section {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 90vw; /* Adjust the size as needed */
+  max-width: 90vw; /* Make sure it fits within the viewport width */
+  max-height: 90vh; /* Make sure it fits within the viewport height */
+  width: auto; /* Maintain original aspect ratio */
   height: auto;
-  max-height: 90vh;
-  background: rgba(0, 0, 0, 0.8); /* Optional: background fade */
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  z-index: 1000; /* Makes sure it stays on top */
+  z-index: 1001; /* Ensure it appears above everything */
 }
 
 .fullscreen-overlay {
@@ -221,4 +218,12 @@ section {
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
   display: none;
+}
+
+#timberImage {
+  cursor: pointer;
+}
+
+#DRMap {
+  cursor: pointer;
 }

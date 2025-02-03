@@ -6,6 +6,40 @@
     <title>Dominican Republic General Reference Map | Cade Smith</title>
     <link rel="stylesheet" href="stylesTest.css" />
   </head>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const img = document.getElementById("DRMap");
+      let overlay;
+
+      img.addEventListener("click", function () {
+        console.log("Image clicked"); // Debugging: See if this logs when you click
+
+        if (!img.classList.contains("fullscreen")) {
+          // Create overlay background
+          overlay = document.createElement("div");
+          overlay.classList.add("fullscreen-overlay");
+          document.body.appendChild(overlay);
+          overlay.style.display = "block";
+
+          // Add fullscreen class to image
+          img.classList.add("fullscreen");
+
+          // Close when clicking overlay
+          overlay.addEventListener("click", function () {
+            console.log("Overlay clicked"); // Debugging
+            img.classList.remove("fullscreen");
+            overlay.style.display = "none";
+            overlay.remove();
+          });
+        } else {
+          console.log("Closing image"); // Debugging
+          img.classList.remove("fullscreen");
+          overlay.style.display = "none";
+          overlay.remove();
+        }
+      });
+    });
+  </script>
   <body>
     <header>
       <nav>
@@ -21,7 +55,7 @@
       <div id="project">
         <h2>The Dominican Republic</h2>
       </div>
-      <div><img src="DR_Final-1.png" height="800px" width="100%" alt="Dominican Republic" />
+      <div><img id= "DRMap" src="DR_Final-1.png" height="400px" width="auto" alt="Dominican Republic" />
       </div>
       <div id="project-description">
         <h3>Description</h3>

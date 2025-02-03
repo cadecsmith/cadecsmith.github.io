@@ -7,27 +7,40 @@
     <link rel="stylesheet" href="stylesTest.css" />
   </head>
   <script>
-    const img = document.getElementById("timberImage");
-    let overlay;
+    document.addEventListener("DOMContentLoaded", function () {
+      const img = document.getElementById("timberImage");
+      let overlay;
 
-    img.addEventListener("click", function () {
-      if (!img.classList.contains("fullscreen")) {
-        // Create overlay background
-        overlay = document.createElement("div");
-        overlay.classList.add("fullscreen-overlay");
-        document.body.appendChild(overlay);
-        overlay.style.display = "block";
+      img.addEventListener("click", function () {
+        console.log("Image clicked"); // Debugging: See if this logs when you click
 
-        // Add fullscreen class to image
-        img.classList.add("fullscreen");
-      } else {
-        // Remove fullscreen class and overlay
-        img.classList.remove("fullscreen");
-        overlay.style.display = "none";
-        overlay.remove();
-      }
+        if (!img.classList.contains("fullscreen")) {
+          // Create overlay background
+          overlay = document.createElement("div");
+          overlay.classList.add("fullscreen-overlay");
+          document.body.appendChild(overlay);
+          overlay.style.display = "block";
+
+          // Add fullscreen class to image
+          img.classList.add("fullscreen");
+
+          // Close when clicking overlay
+          overlay.addEventListener("click", function () {
+            console.log("Overlay clicked"); // Debugging
+            img.classList.remove("fullscreen");
+            overlay.style.display = "none";
+            overlay.remove();
+          });
+        } else {
+          console.log("Closing image"); // Debugging
+          img.classList.remove("fullscreen");
+          overlay.style.display = "none";
+          overlay.remove();
+        }
+      });
     });
   </script>
+
   <body>
     <header>
       <nav>
