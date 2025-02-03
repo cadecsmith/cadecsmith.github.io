@@ -154,13 +154,6 @@ section {
   gap: 1.5rem; /* Space between image and paragraph */
 }
 
-.about-content img {
-  max-width: 200px; /* Set a maximum size for the image */
-  height: auto;
-  border-radius: 5%; /* Circular image */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
 .about-content p {
   flex: 1; /* Allow the paragraph to take the remaining space */
   margin: 0;
@@ -236,8 +229,12 @@ section {
 }
 
 #about img {
-  max-width: 100%;
+  max-width: 40%;
   height: auto;
+  min-width: 200px;
+  max-height: 350px;
+  border-radius: 5%; /* Circular image */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 nav ul {
