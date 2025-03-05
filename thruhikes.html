@@ -54,11 +54,11 @@
         arcgisMap.map.add(trailheadsLayer);*/
 
         // Trails feature layer (lines)
-        const JMT = new FeatureLayer({
-          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/JMT/FeatureServer/0"
+        const PCT = new FeatureLayer({
+          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Full_PCT/OGCFeatureServer/0"
         });
 
-        arcgisMap.map.add(JMT, 0);
+        arcgisMap.map.add(PCT, 0);
 
         // Parks and open spaces (polygons)
         /*const parksLayer = new FeatureLayer({
