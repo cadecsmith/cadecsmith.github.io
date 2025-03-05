@@ -12,7 +12,7 @@
     <style>
       html,
       body,
-      arcgis-map {
+      #viewDiv {
         padding: 0;
         margin: 0;
         height: 100%;
@@ -20,37 +20,48 @@
       }
     </style>
 
-    <script>
-      var esriConfig = {
-        apiKey:
-          "AAPTxy8BH1VEsoebNVZXo8HurOebzkTpszUf3jPcaAcWB_mjpbUmjXahKpHcrW7h0XyXOvuAx1ZA21-xepqUGx8Y7_dERY77oiAe0FgVAQ1870uwEaWN_tDb8horcsKiehLNruG86meBa9L9ymoO_RHxNN0vNKZONuiwt-v9JfKj47B9qMIAy87bsvQE-FhzIrFvNMsYcsxZ5jGUi9Uiq2GWijKSVn9CN8WPOVAb8GFcTM4.AT1_VosA7KQb",
-      };
-    </script>
-    <script
-      type="module"
-      src="https://js.arcgis.com/calcite-components/2.13.2/calcite.esm.js"
-    ></script>
     <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css" />
     <script src="https://js.arcgis.com/4.31/"></script>
-    <script
-      type="module"
-      src="https://js.arcgis.com/map-components/4.31/arcgis-map-components.esm.js"
-    ></script>
   </head>
   <body>
-    <arcgis-map basemap="arcgis/topographic" center="-98.062, 38.856" zoom="4.5"> </arcgis-map>
-  </body>
-  <script>
-    require(["esri/layers/FeatureLayer"], (FeatureLayer) => {
-
-      const arcgisMap = document.querySelector("arcgis-map");
-      arcgisMap.addEventListener("arcgisViewReadyChange", () => {
-
-        const PCT = new FeatureLayer({
-          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Full_PCT/FeatureServer/0"
+    <div id="viewDiv"></div>
+    <script>
+      require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer"], (
+        Map,
+        MapView,
+        FeatureLayer
+      ) => {
+        // Create map
+        const map = new Map({
+          basemap: "topographic",
         });
 
-        arcgisMap.map.add(PCT, 0);
-    });
-  </script>
+        // Create map view
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-98.062, 38.856],
+          zoom: 4.5,
+        });
+
+        // Create feature layer
+        const pctLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Full_PCT/FeatureServer/0",
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "simple-line",
+              color: [255, 0, 0], // Red color
+              width: 3,
+            },
+          },
+        });
+
+        // Add layer to map when view is loaded
+        view.when(() => {
+          map.add(pctLayer);
+        });
+      });
+    </script>
+  </body>
 </html>
