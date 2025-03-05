@@ -57,9 +57,23 @@
           },
         });
 
+        //second feature layer
+        const CumberlandTrail = new FeatureLayer({
+          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Cumberland_Trail/FeatureServer/0",
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "simple-line",
+              color: [0, 255, 0], // Green color
+              width: 3,
+            },
+          },
+        });
+
         // Add layer to map when view is loaded
         view.when(() => {
           map.add(pctLayer);
+          map.add(CumberlandTrail);
         });
       });
     </script>
