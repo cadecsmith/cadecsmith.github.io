@@ -72,9 +72,9 @@
 
         // Add layer to map when view is loaded
         view.when(() => {
-          Promise.all([pctLayer.load(), cumberlandTrail.load()])
+          Promise.all([pctLayer.load(), CumberlandTrail.load()])
             .then(() => {
-              map.addMany([pctLayer, cumberlandTrail]);
+              map.addMany([pctLayer, CumberlandTrail]);
             })
             .catch((error) => {
               console.error("Error loading layers:", error);
