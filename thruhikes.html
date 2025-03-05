@@ -26,101 +26,61 @@
   <body>
     <div id="viewDiv"></div>
     <script>
-            require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer"], (
-              Map,
-              MapView,
-              FeatureLayer
-            ) => {
-              // Create map
-              const map = new Map({
-                basemap: "topo",
-              });
+      require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer"], (
+        Map,
+        MapView,
+        FeatureLayer
+      ) => {
+        // Create map
+        const map = new Map({
+          basemap: "topo",
+        });
 
-              // Create map view
-              const view = new MapView({
-                container: "viewDiv",
-                map: map,
-                center: [-98.062, 38.856],
-                zoom: 4.5,
-              });
+        // Create map view
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-98.062, 38.856],
+          zoom: 4.5,
+        });
 
-              // Create feature layer
-              const pctLayer = new FeatureLayer({
-                url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Full_PCT/FeatureServer/0",
-                renderer: {
-                  type: "simple",
-                  symbol: {
-                    type: "simple-line",
-                    color: [255, 0, 0], // Red color
-                    width: 3,
-                  },
-                },
-              });
-
-              //second feature layer
-              const CumberlandTrail = new FeatureLayer({
-                url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Cumberland_Trail/FeatureServer/0",
-                renderer: {
-                  type: "simple",
-                  symbol: {
-                    type: "simple-line",
-                    color: [0, 255, 0], // Green color
-                    width: 3,
-                  },
-                },
-              });
-
-              geometryType: "polyline",
-        geometryOptions: {
-          geometryPrecision: 2, // Adjust precision to balance detail and performance
-          maxAllowableOffset: calculateMaxAllowableOffset(view) // Dynamic offset based on view
-        },
-        // Simplify rendering at smaller scales
-        minScale: 0, // Visible at all scales
-        maxScale: 0, // Visible at all scales
-        // Optional: Add scale-dependent rendering
-        scaleSymbols: true,
-        // Reduce detail at smaller scales
-        labelingInfo: [{
-          labelExpressionInfo: { expression: "$feature.NAME" },
-          symbol: {
-            type: "text",
-            color: "black",
-            haloColor: "white",
-            haloSize: 1,
-            font: {
-              size: 8,
-              family: "Arial"
-            }
+        // Create feature layer
+        const pctLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Full_PCT/FeatureServer/0",
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "simple-line",
+              color: [255, 0, 0], // Red color
+              width: 3,
+            },
           },
-          minScale: 500000, // Only show labels when zoomed in
-          maxScale: 0
-        }]
-      });
+        });
 
-      // Helper function to calculate dynamic offset
-      function calculateMaxAllowableOffset(view) {
-        // Adjust the offset based on the current view scale
-        return view.scale * 0.001; // You can tune this multiplier
-      }
+        //second feature layer
+        const CumberlandTrail = new FeatureLayer({
+          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Cumberland_Trail/FeatureServer/0",
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "simple-line",
+              color: [0, 255, 0], // Green color
+              width: 3,
+            },
+          },
+        });
 
-      // When adding the layer, you can also set view constraints
-      view.constraints = {
-        minScale: 500000, // Prevents zooming out too far
-        maxScale: 0
-      };
-
-              // Add layer to map when view is loaded
-              view.when(() => {
-                Promise.all([pctLayer.load(), CumberlandTrail.load()])
-                  .then(() => {
-                    map.addMany([pctLayer, CumberlandTrail]);
-                  })
-                  .catch((error) => {
-                    console.error("Error loading layers:", error);
-                  });
-              });
+        // Add layer to map when view is loaded and stuff
+        view.when(() => {
+          Promise.all([pctLayer.load(), CumberlandTrail.load()])
+            .then(() => {
+              map.addMany([pctLayer, CumberlandTrail]);
+            })
+            .catch((error) => {
+              console.error("Error loading layers:", error);
             });
+        });
+      });
     </script>
   </body>
 </html>
