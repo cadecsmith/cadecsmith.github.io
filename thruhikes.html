@@ -37,14 +37,11 @@
       src="https://js.arcgis.com/map-components/4.31/arcgis-map-components.esm.js"
     ></script>
   </head>
-
-  <body>
-    <arcgis-map basemap="arcgis/topographic" center="-98.062, 38.856" zoom="4.5"> </arcgis-map>
-    <script>
-      require(["esri/layers/FeatureLayer"], (FeatureLayer) => {});
-      const JMT = new FeatureLayer({
-        url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/JMT/FeatureServer",
-      });
-    </script>
+  <body></body>
+    <arcgis-map basemap="arcgis/topographic" center="-98.062, 38.856" zoom="4.5">
+      <arcgis-feature-layer
+        url="https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/JMT/FeatureServer"
+      ></arcgis-feature-layer>
+    </arcgis-map>
   </body>
 </html>
