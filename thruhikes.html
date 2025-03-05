@@ -48,25 +48,25 @@
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
   
         // Trailheads feature layer (points)
-        const trailheadsLayer = new FeatureLayer({
+        /*const trailheadsLayer = new FeatureLayer({
           url: "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/Trailheads/FeatureServer/0"
         });
   
-        arcgisMap.map.add(trailheadsLayer);
+        arcgisMap.map.add(trailheadsLayer);*/
   
         // Trails feature layer (lines)
-        const trailsLayer = new FeatureLayer({
-          url: "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/Trails/FeatureServer/0"
+        const JMT = new FeatureLayer({
+          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/JMT/FeatureServer"
         });
   
-        arcgisMap.map.add(trailsLayer, 0);
+        arcgisMap.map.add(JMT, 0);
   
         // Parks and open spaces (polygons)
-        const parksLayer = new FeatureLayer({
+        /*const parksLayer = new FeatureLayer({
           url: "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/Parks_and_Open_Space/FeatureServer/0"
         });
   
-      });
+      });*/
   
     });
   </script>
