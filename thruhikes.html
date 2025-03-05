@@ -37,37 +37,36 @@
       src="https://js.arcgis.com/map-components/4.31/arcgis-map-components.esm.js"
     ></script>
   </head>
-  <body></body>
-    <arcgis-map basemap="arcgis/topographic" center="-98.062, 38.856" zoom="4.5">
-    </arcgis-map>
+  <body>
+    <arcgis-map basemap="arcgis/topographic" center="-98.062, 38.856" zoom="4.5"> </arcgis-map>
   </body>
   <script>
     require(["esri/layers/FeatureLayer"], (FeatureLayer) => {
-  
+
       const arcgisMap = document.querySelector("arcgis-map");
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
-  
+
         // Trailheads feature layer (points)
         /*const trailheadsLayer = new FeatureLayer({
           url: "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/Trailheads/FeatureServer/0"
         });
-  
+
         arcgisMap.map.add(trailheadsLayer);*/
-  
+
         // Trails feature layer (lines)
         const JMT = new FeatureLayer({
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/JMT/FeatureServer/0"
         });
-  
+
         arcgisMap.map.add(JMT, 0);
-  
+
         // Parks and open spaces (polygons)
         /*const parksLayer = new FeatureLayer({
           url: "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/Parks_and_Open_Space/FeatureServer/0"
         });
-  
+
       });*/
-  
+
     });
   </script>
 </html>
