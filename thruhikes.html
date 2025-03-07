@@ -3,12 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>America's Thru Hikes</title>
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="https://js.arcgis.com/calcite-components/2.13.2/calcite.css"
-    />
+    <title>Trail Map with Popups</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.31/"></script>
     <style>
       html,
       body,
@@ -19,24 +16,20 @@
         width: 100%;
       }
     </style>
-
-    <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css" />
-    <script src="https://js.arcgis.com/4.31/"></script>
   </head>
   <body>
     <div id="viewDiv"></div>
+
     <script>
       require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer"], (
         Map,
         MapView,
         FeatureLayer
       ) => {
-        // Create map
         const map = new Map({
-          basemap: "topo",
+          basemap: "topo-vector",
         });
 
-        // Create map view
         const view = new MapView({
           container: "viewDiv",
           map: map,
@@ -44,41 +37,76 @@
           zoom: 4.5,
         });
 
-        // Create feature layer
+        // Configure popup template (customize field names based on your data)
+        const popupTemplate = {
+          title: "{NAME}", // Replace with your actual field name
+          content: [
+            {
+              type: "fields",
+              fieldInfos: [
+                {
+                  fieldName: "LENGTH_MILES", // Replace with actual field name
+                  label: "Length (miles)",
+                  visible: true,
+                  format: {
+                    places: 2,
+                    digitSeparator: true,
+                  },
+                },
+                {
+                  fieldName: "STATE", // Replace with actual field name
+                  label: "State/Province",
+                  visible: true,
+                },
+                {
+                  fieldName: "DESCRIPTION", // Replace with actual field name
+                  label: "Description",
+                  visible: true,
+                },
+              ],
+            },
+          ],
+        };
+
+        // Add Pacific Crest Trail with popup
         const pctLayer = new FeatureLayer({
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Full_PCT/FeatureServer/0",
           renderer: {
             type: "simple",
             symbol: {
               type: "simple-line",
-              color: [255, 0, 0], // Red color
+              color: [255, 0, 0],
               width: 3,
             },
           },
+          popupTemplate: popupTemplate,
+          outFields: ["*"], // Fetch all fields for the popup
         });
 
-        //second feature layer
-        const CumberlandTrail = new FeatureLayer({
-          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Cumberland_Trail/FeatureServer/0",
+        // Add Cumberland Trail with popup (replace URL)
+        const cumberlandTrail = new FeatureLayer({
+          url: "YOUR_CUMBERLAND_TRAIL_FEATURE_LAYER_URL",
           renderer: {
             type: "simple",
             symbol: {
               type: "simple-line",
-              color: [0, 255, 0], // Green color
+              color: [0, 0, 255],
               width: 3,
             },
           },
+          popupTemplate: popupTemplate,
+          outFields: ["*"], // Fetch all fields for the popup
         });
 
-        // Add layer to map when view is loaded and stuff
+        // Configure popup behavior
+        view.popup.dockEnabled = true;
+        view.popup.dockOptions = {
+          position: "auto",
+        };
+
+        // Add both layers when view is loaded
         view.when(() => {
-          Promise.all([pctLayer.load(), CumberlandTrail.load()])
-            .then(() => {
-              map.addMany([pctLayer, CumberlandTrail]);
-            })
-            .catch((error) => {
-              console.error("Error loading layers:", error);
-            });
+          map.addMany([pctLayer, cumberlandTrail]);
         });
       });
     </script>
