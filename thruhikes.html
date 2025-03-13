@@ -46,10 +46,10 @@
   <script>
     require(["esri/layers/FeatureLayer"]),
       (FeatureLayer) => {
-        const layer = new FeatureLayer({
-          url: "services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer",
+        const allTrails = new FeatureLayer({
+          url: "services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
         });
-        view.map.add(layer);
+        view.map.add(allTrails);
       };
   </script>
 </html>
