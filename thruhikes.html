@@ -43,4 +43,13 @@
       <arcgis-zoom position="top-left"></arcgis-zoom>
     </arcgis-map>
   </body>
+  <script>
+    require(["esri/layers/FeatureLayer"]),
+      (FeatureLayer) => {
+        const layer = new FeatureLayer({
+          url: "services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer",
+        });
+        view.map.add(layer);
+      };
+  </script>
 </html>
