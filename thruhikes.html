@@ -44,43 +44,42 @@
     </arcgis-map>
   </body>
   <script>
-    require(["esri/layers/FeatureLayer"],
-      (FeatureLayer) => {
-        const arcgisMap = document.querySelector("arcgis-map");
-      arcgisMap.addEventListener("arcgisViewReadyChange"), () => {
-
-        const popupTrails = {
-          title: "{TrailName}",
-          content: [
-            {
-              type: "fields",
-              fieldInfos: [
-                {
-                  fieldName: "TrailName",
-                  label: "Trail Name",
-                },
-                {
-                  fieldName: "TrailLength",
-                  label: "Trail Length",
-                },
-                {
-                  fieldName: "TrailType",
-                  label: "Trail Type",
-                },
-                {
-                  fieldName: "TrailState",
-                  label: "Trail State",
-                },
-              ],
-            },
-          ],
+    require(["esri/layers/FeatureLayer"], (FeatureLayer) => {
+      const arcgisMap = document.querySelector("arcgis-map");
+      arcgisMap.addEventListener("arcgisViewReadyChange"),
+        () => {
+          const popupTrails = {
+            title: "{TrailName}",
+            content: [
+              {
+                type: "fields",
+                fieldInfos: [
+                  {
+                    fieldName: "TrailName",
+                    label: "Trail Name",
+                  },
+                  {
+                    fieldName: "TrailLength",
+                    label: "Trail Length",
+                  },
+                  {
+                    fieldName: "TrailType",
+                    label: "Trail Type",
+                  },
+                  {
+                    fieldName: "TrailState",
+                    label: "Trail State",
+                  },
+                ],
+              },
+            ],
+          };
         };
 
-        const allTrails = new FeatureLayer({
-          url: "services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0"
-        });
-        view.map.add(allTrails);
+      const allTrails = new FeatureLayer({
+        url: "services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
       });
+      view.map.add(allTrails);
     });
   </script>
 </html>
