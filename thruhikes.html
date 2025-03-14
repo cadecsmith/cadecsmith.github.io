@@ -47,7 +47,7 @@
     require(["esri/layers/FeatureLayer"]),
       (FeatureLayer) => {
         const arcgisMap = document.querySelector("arcgis-map");
-      arcgisMap.addEventListener("arcgisViewReadyChange", () => {
+      arcgisMap.addEventListener("arcgisViewReadyChange"), () => {
 
         const popupTrails = {
           title: "{TrailName}",
