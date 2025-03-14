@@ -44,7 +44,7 @@
     </arcgis-map>
   </body>
   <script>
-    require(["esri/layers/FeatureLayer"]),
+    require(["esri/layers/FeatureLayer"],
       (FeatureLayer) => {
         const arcgisMap = document.querySelector("arcgis-map");
       arcgisMap.addEventListener("arcgisViewReadyChange"), () => {
@@ -80,6 +80,7 @@
           url: "services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0"
         });
         view.map.add(allTrails);
-      };
+      });
+    });
   </script>
 </html>
