@@ -49,7 +49,7 @@
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
         const popupTrails = {
           title: "{Name}",
-          content: "<b>Trail:</b> {Name}<br><b>Length (Miles):</b> {Shape_Leng}",
+          content: "<b>Trail:</b> {Name}<br><b>Length (Miles):</b> {Shape__Length}",
         });
 
         const allTrails = new FeatureLayer({
