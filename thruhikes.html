@@ -40,15 +40,14 @@
   </head>
   <body>
     <div id="title">America's Thru Hikes</div>
+
     <div id="filter-panel">
-      <label for="lengthFilter">Filter by Trail Length:</label>
-      <select id="lengthFilter">
-        <option value="all">All Trails</option>
-        <option value="short">Less than 100 miles</option>
-        <option value="medium">100 - 500 miles</option>
-        <option value="long">More than 500 miles</option>
-      </select>
+      <label for="lengthFilter">Minimum Length (miles):</label>
+      <input type="number" id="lengthFilter" min="0" step="1" />
+      <button onclick="applyFilter()">Filter</button>
+      <button onclick="resetFilter()">Reset</button>
     </div>
+
     <arcgis-map basemap="arcgis/topographic" center="-98.5795, 39.8283" zoom="4.5">
       <arcgis-zoom position="top-right"></arcgis-zoom>
     </arcgis-map>
@@ -81,38 +80,38 @@
     </style>
   </body>
   <script>
-    require(["esri/layers/FeatureLayer"], (FeatureLayer) => {
-      const arcgisMap = document.querySelector("arcgis-map");
-      const popupTrails = {
-        title: "{Name}",
-        content: "<b>Trail:</b> {Name}<br><b>Length (Miles):</b> {Length_Miles}",
-      };
+      require(["esri/layers/FeatureLayer"], (FeatureLayer) => {
+        const arcgisMap = document.querySelector("arcgis-map");
+        const popupTrails = {
+          title: "{Name}",
+          content: "<b>Trail:</b> {Name}<br><b>Length (Miles):</b> {Length_Miles}",
+        };
 
-      arcgisMap.addEventListener("arcgisViewReadyChange", () => {
-        const allTrails = new FeatureLayer({
-          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
-          popupTemplate: popupTrails,
+        arcgisMap.addEventListener("arcgisViewReadyChange", () => {
+          const allTrails = new FeatureLayer({
+            url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
+            popupTemplate: popupTrails,
+          });
+          arcgisMap.map.add(allTrails)};
+
+          // Function to apply the filter based on user input
+    window.applyFilter = function () {
+      let minLength = document.getElementById("lengthFilter").value;
+      if (minLength) {
+        allTrails.definitionExpression = `Length_Miles >= ${minLength}`;
+      } else {
+        allTrails.definitionExpression = ""; // No filter if empty
+      }
+    };
+
+    // Function to reset the filter
+    window.resetFilter = function () {
+      document.getElementById("lengthFilter").value = "";
+      allTrails.definitionExpression = "";
+
+          // Attach event listener to filter dropdown
+          document.getElementById("lengthFilter").addEventListener("change", filterTrails);
         });
-        arcgisMap.map.add(allTrails);
-
-        function filterTrails() {
-          const selectedValue = document.getElementById("lengthFilter").value;
-          let definitionExpression = "";
-
-          if (selectedValue === "short") {
-            definitionExpression = "TrailLength < 100";
-          } else if (selectedValue === "medium") {
-            definitionExpression = "TrailLength >= 100 AND TrailLength <= 500";
-          } else if (selectedValue === "long") {
-            definitionExpression = "TrailLength > 500";
-          }
-
-          allTrails.definitionExpression = definitionExpression;
-        }
-
-        // Attach event listener to filter dropdown
-        document.getElementById("lengthFilter").addEventListener("change", filterTrails);
       });
-    });
   </script>
 </html>
