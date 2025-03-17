@@ -69,7 +69,7 @@
 
       #filter-panel {
         position: absolute;
-        top: 60px; /* Pushes it below the title */
+        top: 65px; /* Pushes it below the title */
         left: 10px;
         background: rgba(255, 255, 255, 0.9);
         padding: 5px 10px;
@@ -94,6 +94,24 @@
           popupTemplate: popupTrails,
         });
         arcgisMap.map.add(allTrails);
+
+        function filterTrails() {
+          const selectedValue = document.getElementById("lengthFilter").value;
+          let definitionExpression = "";
+
+          if (selectedValue === "short") {
+            definitionExpression = "TrailLength < 100";
+          } else if (selectedValue === "medium") {
+            definitionExpression = "TrailLength >= 100 AND TrailLength <= 500";
+          } else if (selectedValue === "long") {
+            definitionExpression = "TrailLength > 500";
+          }
+
+          allTrails.definitionExpression = definitionExpression;
+        }
+
+        // Attach event listener to filter dropdown
+        document.getElementById("lengthFilter").addEventListener("change", filterTrails);
       });
     });
   </script>
