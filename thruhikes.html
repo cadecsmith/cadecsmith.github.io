@@ -78,6 +78,21 @@
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
         });
         arcgisMap.map.add(allTrails);
+
+        // Add click event listener
+        view.on("click", (event) => {
+          view.hitTest(event).then((response) => {
+            if (response.results.length > 0) {
+              const feature = response.results[0].graphic;
+              if (feature && feature.geometry) {
+                view.goTo({
+                  target: feature.geometry,
+                  zoom: 10, // Adjust zoom level as needed
+                });
+              }
+            }
+          });
+        });
       });
     });
   </script>
