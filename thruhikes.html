@@ -46,18 +46,18 @@
   <script>
     require(["esri/layers/FeatureLayer"], (FeatureLayer) => {
       const arcgisMap = document.querySelector("arcgis-map");
-      arcgisMap.addEventListener("arcgisViewReadyChange", () => {
-        const popupTrails = {
-          title: "{Name}",
-          content: "<b>Trail:</b> {Name}<br><b>Length (Miles):</b> {Shape__Length}",
-        };
-      });
+      const popupTrails = {
+        title: "{Name}",
+        content: "<b>Trail:</b> {Name}<br><b>Length (Miles):</b> {Shape__Length}",
+      };
 
-      const allTrails = new FeatureLayer({
-        url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
-        popupTemplate: popupTrails,
+      arcgisMap.addEventListener("arcgisViewReadyChange", () => {
+        const allTrails = new FeatureLayer({
+          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
+          popupTemplate: popupTrails,
+        });
+        arcgisMap.map.add(allTrails);
       });
-      arcgisMap.map.add(allTrails);
     });
   </script>
 </html>
