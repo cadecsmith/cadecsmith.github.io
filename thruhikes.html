@@ -48,30 +48,8 @@
       const arcgisMap = document.querySelector("arcgis-map");
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
         const popupTrails = {
-          title: "{TrailName}",
-          content: [
-            {
-              type: "fields",
-              fieldInfos: [
-                {
-                  fieldName: "TrailName",
-                  label: "Trail Name",
-                },
-                {
-                  fieldName: "TrailLength",
-                  label: "Trail Length",
-                },
-                {
-                  fieldName: "TrailType",
-                  label: "Trail Type",
-                },
-                {
-                  fieldName: "TrailState",
-                  label: "Trail State",
-                },
-              ],
-            },
-          ],
+          title: "{Name}",
+          content: "<b>Trail:</b> {Name}<br><b>Length (Miles):</b> {Shape_Leng}",
         };
 
         const allTrails = new FeatureLayer({
