@@ -39,8 +39,18 @@
     ></script>
   </head>
   <body>
+    <div id="title">"America's Thru Hikes"</div>
+    <div id="filter-panel">
+      <label for="lengthFilter">Filter by Trail Length:</label>
+      <select id="lengthFilter">
+        <option value="all">All Trails</option>
+        <option value="short">Less than 100 miles</option>
+        <option value="medium">100 - 500 miles</option>
+        <option value="long">More than 500 miles</option>
+      </select>
+    </div>
     <arcgis-map basemap="arcgis/topographic" center="-98.5795, 39.8283" zoom="4.5">
-      <arcgis-zoom position="top-left"></arcgis-zoom>
+      <arcgis-zoom position="top-right"></arcgis-zoom>
     </arcgis-map>
   </body>
   <script>
