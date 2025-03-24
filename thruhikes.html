@@ -85,6 +85,7 @@
         allTrails = new FeatureLayer({
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
           popupTemplate: popupTrails,
+          displayFilterEnabled: false,
         });
         arcgisMap.map.add(allTrails);
       });
