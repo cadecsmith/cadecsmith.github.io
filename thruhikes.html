@@ -41,6 +41,13 @@
       <button onclick="applyFilter()">Filter</button>
       <button onclick="resetFilter()">Reset</button>
     </div>
+    <div id="info-panel">
+      <button id="close-button" onclick="closePanel()">✖</button>
+      <h2 id="trail-title">Trail Name</h2>
+      <p id="trail-length"><b>Length (Miles):</b></p>
+      <p id="trail-description"></p>
+      <button id="zoom-button">Zoom to Trail</button>
+    </div>
     <arcgis-map basemap="arcgis/topographic" center="-98.5795, 39.8283" zoom="4.5">
       <arcgis-zoom position="top-right"></arcgis-zoom>
     </arcgis-map>
@@ -68,6 +75,46 @@
         border-radius: 5px;
         box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
         z-index: 1000;
+      }
+
+      #info-panel {
+        position: absolute;
+        top: 0;
+        left: -350px; /* Hidden by default */
+        width: 350px;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 20px;
+        box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.3);
+        transition: left 0.3s ease-in-out;
+        z-index: 1000;
+        overflow-y: auto;
+      }
+
+      #close-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: transparent;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+      }
+
+      #zoom-button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background: #0079c1;
+        color: white;
+        border: none;
+        text-align: center;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+
+      #zoom-button:hover {
+        background: #005a8d;
       }
     </style>
   </body>
