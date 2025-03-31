@@ -123,20 +123,53 @@
       const arcgisMap = document.querySelector("arcgis-map");
       let allTrails;
 
-      const popupTrails = {
-        title: "{Name}",
-        content: "<b>Trail:</b> {Name}<br><b>Length (Miles):</b> {Length_Miles}",
-      };
+      arcgisMap.addEventListener("arcgisViewReadyChange", (event) => {
+        const view = event.detail.view;
 
-      arcgisMap.addEventListener("arcgisViewReadyChange", () => {
         allTrails = new FeatureLayer({
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
-          popupTemplate: popupTrails,
-          displayFilterEnabled: false,
+          outFields: ["Name", "Length_Miles", "Description"], // Ensure fields are included
+          popupEnabled: false, // Disable default popups
         });
+
         arcgisMap.map.add(allTrails);
+
+        // Event listener to handle click
+        view.on("click", async (event) => {
+          const response = await view.hitTest(event);
+          const results = response.results.filter(
+            (result) => result.graphic && result.graphic.layer === allTrails
+          );
+
+          if (results.length > 0) {
+            const graphic = results[0].graphic;
+            const attributes = graphic.attributes;
+
+            // Update the sidebar with feature details
+            document.getElementById("trail-title").innerText = attributes.Name || "Unnamed Trail";
+            document.getElementById("trail-length").innerHTML = `<b>Length (Miles):</b> ${
+              attributes.Length_Miles || "N/A"
+            }`;
+            document.getElementById("trail-description").innerText =
+              attributes.Description || "No description available.";
+
+            // Zoom to selected feature
+            document.getElementById("zoom-button").onclick = () => {
+              view.goTo(graphic.geometry.extent.expand(2));
+            };
+
+            // Show the sidebar
+            document.getElementById("info-panel").style.left = "0px";
+          }
+        });
       });
 
+      // Function to close the sidebar
+      window.closePanel = function () {
+        document.getElementById("info-panel").style.left = "-350px";
+      };
+
+      // Filtering functions (kept the same)
       window.applyFilter = function () {
         const minLength = document.getElementById("lengthFilter").value;
         if (minLength) {
