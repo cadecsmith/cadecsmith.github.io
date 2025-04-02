@@ -125,6 +125,7 @@
       const arcgisMap = document.querySelector("arcgis-map");
       let allTrails;
       let selectedFeature = null;
+      let currentFilterValue = null;
 
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
         allTrails = new FeatureLayer({
@@ -164,9 +165,9 @@
               // Set up zoom button functionality
               document.getElementById("zoom-button").onclick = () => zoomToFeature(feature.graphic);
 
-              // Optional: immediately zoom and filter
-              zoomToFeature(feature.graphic);
+              // Filter to selected feature and zoom
               filterToSelectedFeature(attributes.OBJECTID);
+              zoomToFeature(feature.graphic);
             }
           });
         });
@@ -189,26 +190,48 @@
 
       function filterToSelectedFeature(objectId) {
         if (objectId) {
+          // Store the current filter value for when we close the panel
+          currentFilterValue = document.getElementById("lengthFilter").value;
+
+          // Apply definition expression to show only the selected trail
           allTrails.definitionExpression = `OBJECTID = ${objectId}`;
+
+          // Update filter display
+          console.log("Filtered to trail with OBJECTID: " + objectId);
         }
       }
 
       window.closePanel = function () {
         document.getElementById("info-panel").style.right = "-350px";
-        // Reset the definition expression to show all trails again
-        allTrails.definitionExpression = "";
+
+        // Reset to previous length filter if there was one, or clear filter
+        if (currentFilterValue) {
+          allTrails.definitionExpression = `Length_Miles >= ${currentFilterValue}`;
+        } else {
+          allTrails.definitionExpression = "";
+        }
+
+        selectedFeature = null;
       };
 
       window.applyFilter = function () {
         const minLength = document.getElementById("lengthFilter").value;
-        if (minLength) {
+        currentFilterValue = minLength;
+
+        // Don't apply length filter if a feature is selected
+        if (!selectedFeature && minLength) {
           allTrails.definitionExpression = `Length_Miles >= ${minLength}`;
         }
       };
 
       window.resetFilter = function () {
-        allTrails.definitionExpression = "";
+        // Don't reset filter if a feature is selected
+        if (!selectedFeature) {
+          allTrails.definitionExpression = "";
+        }
+
         document.getElementById("lengthFilter").value = "";
+        currentFilterValue = null;
       };
     });
   </script>
