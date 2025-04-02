@@ -119,23 +119,79 @@
     </style>
   </body>
   <script>
-    require(["esri/layers/FeatureLayer"], (FeatureLayer) => {
+    require(["esri/layers/FeatureLayer", "esri/geometry/Extent"], (FeatureLayer, Extent) => {
       const arcgisMap = document.querySelector("arcgis-map");
       let allTrails;
-
-      const popupTrails = {
-        title: "{Name}",
-        content: "<b>Trail:</b> {Name}<br><b>Length (Miles):</b> {Length_Miles}",
-      };
+      let selectedFeature = null;
 
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
         allTrails = new FeatureLayer({
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
-          popupTemplate: popupTrails,
+          outFields: ["*"], // Get all fields
           displayFilterEnabled: false,
         });
+
         arcgisMap.map.add(allTrails);
+
+        // Add click event to the view
+        arcgisMap.view.on("click", (event) => {
+          // Perform a hitTest to check if a feature was clicked
+          arcgisMap.view.hitTest(event).then((response) => {
+            const feature = response.results?.find((result) => result.graphic?.layer === allTrails);
+
+            if (feature) {
+              const attributes = feature.graphic.attributes;
+              selectedFeature = attributes;
+
+              // Update the side panel with feature information
+              document.getElementById("trail-title").textContent = attributes.Name;
+              document.getElementById(
+                "trail-length"
+              ).innerHTML = `<b>Length (Miles):</b> ${attributes.Length_Miles}`;
+              document.getElementById("trail-description").textContent =
+                attributes.Description ||
+                "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
+
+              // Show the side panel
+              document.getElementById("info-panel").style.left = "0";
+
+              // Set up zoom button functionality
+              document.getElementById("zoom-button").onclick = () => zoomToFeature(feature.graphic);
+
+              // Optional: immediately zoom and filter
+              zoomToFeature(feature.graphic);
+              filterToSelectedFeature(attributes.OBJECTID);
+            }
+          });
+        });
       });
+
+      function zoomToFeature(graphic) {
+        // Zoom to the selected feature with some padding
+        if (graphic && graphic.geometry) {
+          arcgisMap.view.goTo(
+            {
+              target: graphic.geometry,
+              padding: { left: 350 }, // Account for the open side panel
+            },
+            {
+              duration: 1000, // Animation duration in milliseconds
+            }
+          );
+        }
+      }
+
+      function filterToSelectedFeature(objectId) {
+        if (objectId) {
+          allTrails.definitionExpression = `OBJECTID = ${objectId}`;
+        }
+      }
+
+      window.closePanel = function () {
+        document.getElementById("info-panel").style.left = "-350px";
+        // Reset the definition expression to show all trails again
+        allTrails.definitionExpression = "";
+      };
 
       window.applyFilter = function () {
         const minLength = document.getElementById("lengthFilter").value;
