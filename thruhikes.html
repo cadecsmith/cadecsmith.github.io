@@ -150,6 +150,9 @@
               const attributes = feature.graphic.attributes;
               selectedFeature = attributes;
 
+              // Log available attributes to console for debugging
+              console.log("Feature attributes:", attributes);
+
               // Update the side panel with feature information
               document.getElementById("trail-title").textContent = attributes.Name;
               document.getElementById(
@@ -166,7 +169,7 @@
               document.getElementById("zoom-button").onclick = () => zoomToFeature(feature.graphic);
 
               // Filter to selected feature and zoom
-              filterToSelectedFeature(attributes.OBJECTID);
+              filterToSelectedFeature(attributes.Name);
               zoomToFeature(feature.graphic);
             }
           });
@@ -188,16 +191,17 @@
         }
       }
 
-      function filterToSelectedFeature(objectId) {
-        if (objectId) {
+      function filterToSelectedFeature(trailName) {
+        if (trailName) {
           // Store the current filter value for when we close the panel
           currentFilterValue = document.getElementById("lengthFilter").value;
 
           // Apply definition expression to show only the selected trail
-          allTrails.definitionExpression = `OBJECTID = ${objectId}`;
+          // Need to use single quotes for string values in SQL expressions
+          allTrails.definitionExpression = `Name = '${trailName}'`;
 
           // Update filter display
-          console.log("Filtered to trail with OBJECTID: " + objectId);
+          console.log("Filtered to trail with Name: " + trailName);
         }
       }
 
