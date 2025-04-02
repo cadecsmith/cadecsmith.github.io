@@ -79,16 +79,18 @@
 
       #info-panel {
         position: absolute;
-        top: 0;
-        left: -350px; /* Hidden by default */
-        width: 350px;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.95);
-        padding: 20px;
-        box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.3);
-        transition: left 0.3s ease-in-out;
+        top: 65px;
+        right: -350px; /* Hidden by default, now on right side */
+        width: 300px;
+        max-height: 60%; /* Not full height */
+        background: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+        transition: right 0.3s ease-in-out;
         z-index: 1000;
         overflow-y: auto;
+        margin: 10px; /* Space around the panel */
       }
 
       #close-button {
@@ -133,6 +135,10 @@
 
         arcgisMap.map.add(allTrails);
 
+        // Disable default popup
+        arcgisMap.view.popup.autoOpenEnabled = false;
+        arcgisMap.view.popup.dockEnabled = false;
+
         // Add click event to the view
         arcgisMap.view.on("click", (event) => {
           // Perform a hitTest to check if a feature was clicked
@@ -153,7 +159,7 @@
                 "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
 
               // Show the side panel
-              document.getElementById("info-panel").style.left = "0";
+              document.getElementById("info-panel").style.right = "10px";
 
               // Set up zoom button functionality
               document.getElementById("zoom-button").onclick = () => zoomToFeature(feature.graphic);
@@ -172,7 +178,7 @@
           arcgisMap.view.goTo(
             {
               target: graphic.geometry,
-              padding: { left: 350 }, // Account for the open side panel
+              padding: { right: 350 }, // Account for the open side panel
             },
             {
               duration: 1000, // Animation duration in milliseconds
@@ -188,7 +194,7 @@
       }
 
       window.closePanel = function () {
-        document.getElementById("info-panel").style.left = "-350px";
+        document.getElementById("info-panel").style.right = "-350px";
         // Reset the definition expression to show all trails again
         allTrails.definitionExpression = "";
       };
