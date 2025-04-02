@@ -118,21 +118,158 @@
       #zoom-button:hover {
         background: #005a8d;
       }
+
+      #legend {
+        position: absolute;
+        bottom: 20px;
+        left: 10px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        max-height: 200px;
+        overflow-y: auto;
+        display: none; /* Hidden initially */
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+
+      .legend-color {
+        width: 20px;
+        height: 3px;
+        margin-right: 8px;
+      }
     </style>
+
+    <!-- Add legend div -->
+    <div id="legend">
+      <h4 style="margin-top: 0; margin-bottom: 10px">Trail Legend</h4>
+      <div id="legend-items"></div>
+    </div>
   </body>
   <script>
-    require(["esri/layers/FeatureLayer", "esri/geometry/Extent"], (FeatureLayer, Extent) => {
+    require([
+      "esri/layers/FeatureLayer",
+      "esri/renderers/UniqueValueRenderer",
+      "esri/symbols/SimpleLineSymbol",
+      "esri/Color",
+    ], (FeatureLayer, UniqueValueRenderer, SimpleLineSymbol, Color) => {
       const arcgisMap = document.querySelector("arcgis-map");
       let allTrails;
       let selectedFeature = null;
       let currentFilterValue = null;
 
+      // Define a set of distinct colors for trails
+      const trailColors = [
+        "#e6194B",
+        "#3cb44b",
+        "#ffe119",
+        "#4363d8",
+        "#f58231",
+        "#911eb4",
+        "#42d4f4",
+        "#f032e6",
+        "#bfef45",
+        "#fabebe",
+        "#469990",
+        "#e6beff",
+        "#9A6324",
+        "#800000",
+        "#aaffc3",
+        "#808000",
+        "#000075",
+        "#a9a9a9",
+        "#008080",
+        "#ffd8b1",
+      ];
+
+      // Function to generate color based on trail name
+      function getColorForTrail(trailName) {
+        // Simple hash function to consistently map trail names to colors
+        let hash = 0;
+        for (let i = 0; i < trailName.length; i++) {
+          hash = trailName.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return trailColors[Math.abs(hash) % trailColors.length];
+      }
+
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
+        // Create feature layer
         allTrails = new FeatureLayer({
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
-          outFields: ["*"], // Get all fields
+          outFields: ["*"],
           displayFilterEnabled: false,
         });
+
+        // First, let's query the layer to get all unique trail names
+        allTrails
+          .queryFeatures({
+            where: "1=1",
+            outFields: ["Name"],
+            returnGeometry: false,
+            returnDistinctValues: true,
+          })
+          .then(function (results) {
+            // Create a unique value renderer
+            const renderer = new UniqueValueRenderer({
+              field: "Name",
+              defaultSymbol: new SimpleLineSymbol({
+                color: new Color("#666666"),
+                width: "2px",
+              }),
+              uniqueValueInfos: [],
+            });
+
+            // Create legend items container
+            const legendItems = document.getElementById("legend-items");
+
+            // Add unique value for each trail name
+            const trailNames = [];
+            results.features.forEach(function (feature) {
+              const trailName = feature.attributes.Name;
+
+              // Avoid duplicates
+              if (trailNames.includes(trailName)) return;
+              trailNames.push(trailName);
+
+              const color = getColorForTrail(trailName);
+
+              // Add to renderer
+              renderer.uniqueValueInfos.push({
+                value: trailName,
+                symbol: new SimpleLineSymbol({
+                  color: new Color(color),
+                  width: "3px",
+                }),
+              });
+
+              // Add to legend
+              const legendItem = document.createElement("div");
+              legendItem.className = "legend-item";
+
+              const colorBox = document.createElement("div");
+              colorBox.className = "legend-color";
+              colorBox.style.backgroundColor = color;
+
+              const nameSpan = document.createElement("span");
+              nameSpan.textContent = trailName;
+
+              legendItem.appendChild(colorBox);
+              legendItem.appendChild(nameSpan);
+              legendItems.appendChild(legendItem);
+            });
+
+            // Apply renderer
+            allTrails.renderer = renderer;
+
+            // Show legend
+            document.getElementById("legend").style.display = "block";
+          });
 
         arcgisMap.map.add(allTrails);
 
@@ -149,9 +286,6 @@
             if (feature) {
               const attributes = feature.graphic.attributes;
               selectedFeature = attributes;
-
-              // Log available attributes to console for debugging
-              console.log("Feature attributes:", attributes);
 
               // Update the side panel with feature information
               document.getElementById("trail-title").textContent = attributes.Name;
@@ -197,11 +331,7 @@
           currentFilterValue = document.getElementById("lengthFilter").value;
 
           // Apply definition expression to show only the selected trail
-          // Need to use single quotes for string values in SQL expressions
           allTrails.definitionExpression = `Name = '${trailName}'`;
-
-          // Update filter display
-          console.log("Filtered to trail with Name: " + trailName);
         }
       }
 
