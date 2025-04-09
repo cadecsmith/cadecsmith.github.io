@@ -36,10 +36,23 @@
   <body>
     <div id="title">America's Thru Hikes</div>
     <div id="filter-panel">
-      <label for="lengthFilter">Minimum Length (miles):</label>
-      <input type="number" id="lengthFilter" min="0" step="1" />
-      <button onclick="applyFilter()">Filter</button>
-      <button onclick="resetFilter()">Reset</button>
+      <!-- Length Filter Section -->
+      <div class="filter-section">
+        <label for="lengthFilter">Minimum Length (miles):</label>
+        <input type="number" id="lengthFilter" min="0" step="1" />
+        <button onclick="applyFilter()">Filter</button>
+        <button onclick="resetFilter()">Reset</button>
+      </div>
+
+      <!-- Search Section -->
+      <div class="filter-section">
+        <label for="searchInput">Search by Trail Name:</label>
+        <div class="search-container">
+          <input type="text" id="searchInput" placeholder="Enter trail name..." list="trailsList" />
+          <datalist id="trailsList"></datalist>
+          <button onclick="searchTrail()">Search</button>
+        </div>
+      </div>
     </div>
     <div id="info-panel">
       <button id="close-button" onclick="closePanel()">✖</button>
@@ -70,16 +83,40 @@
         top: 65px;
         left: 10px;
         background: rgba(255, 255, 255, 0.9);
-        padding: 5px 10px;
+        padding: 10px;
         font-size: 14px;
         border-radius: 5px;
         box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
         z-index: 1000;
+        width: 270px;
+      }
+
+      .filter-section {
+        margin-bottom: 10px;
+      }
+
+      .filter-section:last-child {
+        margin-bottom: 0;
+      }
+
+      .search-container {
+        display: flex;
+        margin-top: 5px;
+      }
+
+      #searchInput {
+        flex-grow: 1;
+        margin-right: 5px;
+      }
+
+      input,
+      button {
+        padding: 5px;
       }
 
       #info-panel {
         position: absolute;
-        top: 70px;
+        top: 65px;
         right: -350px; /* Hidden by default, now on right side */
         width: 300px;
         max-height: 60%; /* Not full height */
@@ -118,32 +155,6 @@
       #zoom-button:hover {
         background: #005a8d;
       }
-
-      #legend {
-        position: absolute;
-        bottom: 20px;
-        left: 10px;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 10px;
-        border-radius: 5px;
-        box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
-        max-height: 200px;
-        overflow-y: auto;
-        display: none; /* Hidden initially */
-      }
-
-      .legend-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 5px;
-      }
-
-      .legend-color {
-        width: 20px;
-        height: 3px;
-        margin-right: 8px;
-      }
     </style>
   </body>
   <script>
@@ -152,11 +163,13 @@
       "esri/renderers/UniqueValueRenderer",
       "esri/symbols/SimpleLineSymbol",
       "esri/Color",
-    ], (FeatureLayer, UniqueValueRenderer, SimpleLineSymbol, Color) => {
+      "esri/Graphic",
+    ], (FeatureLayer, UniqueValueRenderer, SimpleLineSymbol, Color, Graphic) => {
       const arcgisMap = document.querySelector("arcgis-map");
       let allTrails;
       let selectedFeature = null;
       let currentFilterValue = null;
+      let trailsList = [];
 
       // Define a set of distinct colors for trails
       const trailColors = [
@@ -222,14 +235,16 @@
             // Create legend items container
             const legendItems = document.getElementById("legend-items");
 
+            // Create datalist for search autocomplete
+            const trailsDatalist = document.getElementById("trailsList");
+
             // Add unique value for each trail name
-            const trailNames = [];
             results.features.forEach(function (feature) {
               const trailName = feature.attributes.Name;
 
               // Avoid duplicates
-              if (trailNames.includes(trailName)) return;
-              trailNames.push(trailName);
+              if (trailsList.includes(trailName)) return;
+              trailsList.push(trailName);
 
               const color = getColorForTrail(trailName);
 
@@ -238,7 +253,7 @@
                 value: trailName,
                 symbol: new SimpleLineSymbol({
                   color: new Color(color),
-                  width: "2px",
+                  width: "3px",
                 }),
               });
 
@@ -256,7 +271,15 @@
               legendItem.appendChild(colorBox);
               legendItem.appendChild(nameSpan);
               legendItems.appendChild(legendItem);
+
+              // Add to search datalist
+              const option = document.createElement("option");
+              option.value = trailName;
+              trailsDatalist.appendChild(option);
             });
+
+            // Sort trail names alphabetically for easier search
+            trailsList.sort();
 
             // Apply renderer
             allTrails.renderer = renderer;
@@ -279,29 +302,74 @@
 
             if (feature) {
               const attributes = feature.graphic.attributes;
-              selectedFeature = attributes;
-
-              // Update the side panel with feature information
-              document.getElementById("trail-title").textContent = attributes.Name;
-              document.getElementById(
-                "trail-length"
-              ).innerHTML = `<b>Length (Miles):</b> ${attributes.Length_Miles}`;
-              document.getElementById("trail-description").textContent =
-                attributes.Description ||
-                "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
-
-              // Show the side panel
-              document.getElementById("info-panel").style.right = "10px";
-
-              // Set up zoom button functionality
-              document.getElementById("zoom-button").onclick = () => zoomToFeature(feature.graphic);
-
-              // Filter to selected feature and zoom
-              filterToSelectedFeature(attributes.Name);
-              zoomToFeature(feature.graphic);
+              selectTrail(attributes, feature.graphic);
             }
           });
         });
+      });
+
+      // Centralized function to select a trail by attributes and graphic
+      function selectTrail(attributes, graphic) {
+        selectedFeature = attributes;
+
+        // Update the side panel with feature information
+        document.getElementById("trail-title").textContent = attributes.Name;
+        document.getElementById(
+          "trail-length"
+        ).innerHTML = `<b>Length (Miles):</b> ${attributes.Length_Miles}`;
+        document.getElementById("trail-description").textContent =
+          attributes.Description ||
+          "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
+
+        // Show the side panel
+        document.getElementById("info-panel").style.right = "10px";
+
+        // Set up zoom button functionality
+        document.getElementById("zoom-button").onclick = () => zoomToFeature(graphic);
+
+        // Filter to selected feature and zoom
+        filterToSelectedFeature(attributes.Name);
+
+        if (graphic) {
+          zoomToFeature(graphic);
+        }
+      }
+
+      // Function to search for a trail by name
+      window.searchTrail = function () {
+        const searchValue = document.getElementById("searchInput").value.trim();
+
+        if (!searchValue) return;
+
+        // Query the feature layer for the specified trail
+        allTrails
+          .queryFeatures({
+            where: `UPPER(Name) LIKE UPPER('%${searchValue}%')`,
+            outFields: ["*"],
+            returnGeometry: true,
+          })
+          .then(function (results) {
+            if (results.features.length > 0) {
+              // Get the first matching trail
+              const feature = results.features[0];
+
+              // Select the trail
+              selectTrail(feature.attributes, feature);
+            } else {
+              alert("No trails found with that name. Please try again.");
+            }
+          })
+          .catch(function (error) {
+            console.error("Error searching for trail:", error);
+          });
+      };
+
+      // Add enter key functionality to search input
+      document.getElementById("searchInput").addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          window.searchTrail();
+        }
       });
 
       function zoomToFeature(graphic) {
