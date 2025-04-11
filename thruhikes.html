@@ -171,44 +171,10 @@
       let currentFilterValue = null;
       let trailsList = [];
 
-      // Define a set of distinct colors for trails
-      const trailColors = [
-        "#e6194B",
-        "#3cb44b",
-        "#ffe119",
-        "#4363d8",
-        "#f58231",
-        "#911eb4",
-        "#42d4f4",
-        "#f032e6",
-        "#bfef45",
-        "#fabebe",
-        "#469990",
-        "#e6beff",
-        "#9A6324",
-        "#800000",
-        "#aaffc3",
-        "#808000",
-        "#000075",
-        "#a9a9a9",
-        "#008080",
-        "#ffd8b1",
-      ];
-
-      // Function to generate color based on trail name
-      function getColorForTrail(trailName) {
-        // Simple hash function to consistently map trail names to colors
-        let hash = 0;
-        for (let i = 0; i < trailName.length; i++) {
-          hash = trailName.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        return trailColors[Math.abs(hash) % trailColors.length];
-      }
-
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
         // Create feature layer
         allTrails = new FeatureLayer({
-          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
+          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Generalized/FeatureServer/0",
           outFields: ["*"],
           displayFilterEnabled: false,
         });
