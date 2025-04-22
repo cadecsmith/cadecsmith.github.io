@@ -121,7 +121,7 @@
         top: 75px;
         right: -350px; /* Hidden by default, now on right side */
         width: 300px;
-        max-height: 60%; /* Not full height */
+        max-height: 60%;
         background: rgba(255, 255, 255, 0.9);
         padding: 15px;
         border-radius: 5px;
@@ -129,7 +129,7 @@
         transition: right 0.3s ease-in-out;
         z-index: 1000;
         overflow-y: auto;
-        margin: 10px; /* Space around the panel */
+        margin: 10px;
       }
 
       #close-button {
@@ -160,7 +160,6 @@
     </style>
   </body>
   <script>
-    // Load required ArcGIS modules
     require([
       "esri/layers/FeatureLayer",
       "esri/renderers/UniqueValueRenderer",
@@ -174,27 +173,27 @@
       let currentFilterValue = null;
       let currentMaxFilterValue = null;
 
-      // Array of colors for different trails - lime (#bfef45) removed
+      // colors for trails (chatgpt came up with this solution there must be a better way)
       const trailColors = [
-        "#e6194B", // Red
-        "#3cb44b", // Green
-        "#ffe119", // Yellow
-        "#4363d8", // Blue
-        "#f58231", // Orange
-        "#911eb4", // Purple
-        "#42d4f4", // Cyan
-        "#f032e6", // Magenta
-        "#fabebe", // Pink
-        "#469990", // Teal
-        "#e6beff", // Lavender
-        "#9A6324", // Brown
-        "#800000", // Maroon
-        "#aaffc3", // Mint
-        "#808000", // Olive
-        "#ffd8b1", // Apricot
-        "#000075", // Navy
-        "#a9a9a9", // Grey
-        "#ff7b00", // Dark Orange
+        "#e6194B",
+        "#3cb44b",
+        "#ffe119",
+        "#4363d8",
+        "#f58231",
+        "#911eb4",
+        "#42d4f4",
+        "#f032e6",
+        "#fabebe",
+        "#469990",
+        "#e6beff",
+        "#9A6324",
+        "#800000",
+        "#aaffc3",
+        "#808000",
+        "#ffd8b1",
+        "#000075",
+        "#a9a9a9",
+        "#ff7b00",
       ];
 
       // Function that assigns consistent colors to trail names
@@ -206,13 +205,12 @@
         return trailColors[Math.abs(hash) % trailColors.length];
       }
 
-      // Function to search for a trail by name
+      //search for a trail by name
       window.searchTrail = function () {
         const searchValue = document.getElementById("searchInput").value.trim();
 
         if (searchValue === "") return;
 
-        // Query for the specific trail
         const query = allTrails.createQuery();
         query.where = `UPPER(Name) LIKE UPPER('%${searchValue}%')`;
         query.returnGeometry = true;
@@ -224,7 +222,6 @@
             const attributes = feature.attributes;
             selectedFeature = attributes;
 
-            // Update info panel
             document.getElementById("trail-title").textContent = attributes.Name;
             document.getElementById(
               "trail-length"
@@ -233,13 +230,10 @@
               attributes.Description ||
               "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
 
-            // Show info panel
             document.getElementById("info-panel").style.right = "10px";
 
-            // Set zoom button
             document.getElementById("zoom-button").onclick = () => zoomToFeature(feature);
 
-            // Filter map to show only this trail
             filterToSelectedFeature(attributes.Name);
 
             // Zoom to trail
@@ -250,13 +244,11 @@
         });
       };
 
-      // When the map is ready
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
-        // Create a feature layer for trails
         allTrails = new FeatureLayer({
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
           outFields: ["*"],
-          definitionExpression: "1=1", // Show all trails initially
+          definitionExpression: "1=1",
         });
 
         // Query to get all unique trail names
@@ -268,7 +260,7 @@
             orderByFields: ["Name"],
           })
           .then(function (results) {
-            // Create renderer to style trails by name
+            //create renderer to style trails by name
             const renderer = new UniqueValueRenderer({
               field: "Name",
               defaultSymbol: new SimpleLineSymbol({
@@ -286,7 +278,6 @@
             results.features.forEach(function (feature) {
               const trailName = feature.attributes.Name;
 
-              // Skip duplicates or empty names
               if (!trailName || trailNames.includes(trailName)) return;
               trailNames.push(trailName);
 
@@ -295,31 +286,28 @@
               option.value = trailName;
               trailsList.appendChild(option);
 
-              // Get color for this trail
               const color = getColorForTrail(trailName);
 
-              // Add to renderer
+              //add to renderer
               renderer.uniqueValueInfos.push({
                 value: trailName,
                 symbol: new SimpleLineSymbol({
                   color: new Color(color),
-                  width: "3px", // Make lines a bit thicker for visibility
+                  width: "3px",
                 }),
                 label: trailName,
               });
             });
-
-            // Apply renderer to trails layer
             allTrails.renderer = renderer;
           });
 
-        // Add trails layer to map
+        //add trails layer
         arcgisMap.map.add(allTrails);
 
-        // Disable default popups
+        // disable default popup (does this still matter?)
         arcgisMap.view.popup.autoOpenEnabled = false;
 
-        // Add click event handler
+        //click event handler
         arcgisMap.view.on("click", (event) => {
           arcgisMap.view.hitTest(event).then((response) => {
             const feature = response.results?.find((result) => result.graphic?.layer === allTrails);
@@ -352,20 +340,17 @@
           arcgisMap.view.goTo(
             {
               target: graphic.geometry,
-              padding: { right: 350 }, // Space for info panel
+              padding: { right: 350 },
             },
-            { duration: 1000 } // Animation time
+            { duration: 1000 }
           );
         }
       }
 
-      // Filter map to show only one trail
+      // Filter map to show only the selected trail
       function filterToSelectedFeature(trailName) {
         if (trailName) {
-          // Save current filter value
           currentFilterValue = document.getElementById("lengthFilter").value;
-
-          // Apply filter to show only selected trail
           allTrails.definitionExpression = `Name = '${trailName}'`;
         }
       }
