@@ -383,24 +383,35 @@
         selectedFeature = null;
       };
 
-      // Function to apply length filter (called from HTML)
+      //length filter function (called from HTML)
       window.applyFilter = function () {
-        const minLength = document.getElementById("lengthFilter").value;
-        const maxLength = document.getElementById("maxLengthFilter").value;
+        const minLengthValue = document.getElementById("lengthFilter").value.trim();
+        const maxLengthValue = document.getElementById("maxLengthFilter").value.trim();
+
+        // Parse values as numbers if present
+        const minLength = minLengthValue ? parseFloat(minLengthValue) : null;
+        const maxLength = maxLengthValue ? parseFloat(maxLengthValue) : null;
+
+        // Store current filter values
         currentFilterValue = minLength;
         currentMaxFilterValue = maxLength;
 
-        if (minLength && maxLength) {
-          expression = `Length_Miles >= ${minLength} AND Length_Miles <= ${maxLength}`;
-        } else if (minLength) {
-          expression = `Length_Miles >= ${minLength}`;
-        } else if (maxLength) {
-          expression = `Length_Miles <= ${maxLength}`;
-        } else {
-          expression = null;
-        }
-        if (expression) {
-          allTrails.definitionExpression = `Length_Miles >= ${minLength}`;
+        // Only apply if no trail selected
+        if (!selectedFeature) {
+          let expression = "";
+
+          if (minLength !== null && maxLength !== null) {
+            expression = `Length_Miles >= ${minLength} AND Length_Miles <= ${maxLength}`;
+          } else if (minLength !== null) {
+            expression = `Length_Miles >= ${minLength}`;
+          } else if (maxLength !== null) {
+            expression = `Length_Miles <= ${maxLength}`;
+          } else {
+            expression = "1=1"; // Show all trails if no filters
+          }
+
+          console.log("Filter expression:", expression); // Debug: log the expression
+          allTrails.definitionExpression = expression;
         }
       };
 
