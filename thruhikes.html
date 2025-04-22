@@ -158,22 +158,20 @@
     </style>
   </body>
   <script>
+    // Load required ArcGIS modules
     require([
       "esri/layers/FeatureLayer",
       "esri/renderers/UniqueValueRenderer",
       "esri/symbols/SimpleLineSymbol",
       "esri/Color",
     ], (FeatureLayer, UniqueValueRenderer, SimpleLineSymbol, Color) => {
+      // Get map element and initialize variables
       const arcgisMap = document.querySelector("arcgis-map");
-      let detailedTrails;
-      let generalizedTrails;
+      let allTrails;
       let selectedFeature = null;
       let currentFilterValue = null;
 
-      // Define scale threshold - starting with a higher value to ensure visibility
-      const SCALE_THRESHOLD = 150000; // Increased from 50000
-
-      // Trail colors array
+      // Array of colors for different trails
       const trailColors = [
         "#e6194B",
         "#3cb44b",
@@ -185,8 +183,10 @@
         "#f032e6",
         "#bfef45",
         "#fabebe",
+        // (shortened from original 20 colors)
       ];
 
+      // Function that assigns consistent colors to trail names
       function getColorForTrail(trailName) {
         let hash = 0;
         for (let i = 0; i < trailName.length; i++) {
@@ -195,269 +195,119 @@
         return trailColors[Math.abs(hash) % trailColors.length];
       }
 
+      // When the map is ready
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
-        console.log("Map view is ready");
-
-        // Log the current scale to help with debugging
-        console.log("Initial map scale:", arcgisMap.view.scale);
-
-        // Create detailed trails layer
-        detailedTrails = new FeatureLayer({
+        // Create a feature layer for trails
+        allTrails = new FeatureLayer({
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
           outFields: ["*"],
-          visible: true, // Ensure visibility is on
-          title: "Detailed Trails",
         });
 
-        // Create generalized trails layer
-        generalizedTrails = new FeatureLayer({
-          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Generalized/FeatureServer/0",
-          outFields: ["*"],
-          visible: true, // Ensure visibility is on
-          title: "Generalized Trails",
-        });
-
-        // Add layers to map FIRST before setting up styling
-        arcgisMap.map.addMany([generalizedTrails, detailedTrails]);
-        console.log("Added layers to map");
-
-        // Handle layer loading errors
-        detailedTrails.when(
-          () => {
-            console.log("Detailed trails layer loaded successfully");
-          },
-          (error) => {
-            console.error("Error loading detailed trails layer:", error);
-          }
-        );
-
-        generalizedTrails.when(
-          () => {
-            console.log("Generalized trails layer loaded successfully");
-          },
-          (error) => {
-            console.error("Error loading generalized trails layer:", error);
-          }
-        );
-
-        // Now set up styling and scale-dependent visibility
-        Promise.all([setupLayerStyling(detailedTrails), setupLayerStyling(generalizedTrails)])
-          .then(() => {
-            console.log("Layer styling complete");
-
-            // NOW set scale-dependent visibility
-            updateLayerVisibility(arcgisMap.view.scale);
-
-            // Set up scale watcher
-            arcgisMap.view.watch("scale", (newScale) => {
-              console.log("Scale changed to:", newScale);
-              updateLayerVisibility(newScale);
+        // Query to get all unique trail names
+        allTrails
+          .queryFeatures({
+            where: "1=1",
+            outFields: ["Name"],
+            returnDistinctValues: true,
+          })
+          .then(function (results) {
+            // Create renderer to style trails by name
+            const renderer = new UniqueValueRenderer({
+              field: "Name",
+              defaultSymbol: new SimpleLineSymbol({
+                color: new Color("#666666"),
+                width: "2px",
+              }),
+              uniqueValueInfos: [],
             });
 
-            // Set up interaction events
-            setupMapInteraction();
-          })
-          .catch((error) => {
-            console.error("Error setting up layer styling:", error);
-          });
-      });
+            // Get legend container
+            const legendItems = document.getElementById("legend-items");
 
-      // Function to update layer visibility based on scale
-      function updateLayerVisibility(scale) {
-        detailedTrails.visible = scale <= SCALE_THRESHOLD;
-        generalizedTrails.visible = scale > SCALE_THRESHOLD;
-        console.log(
-          `Scale: ${scale}, Detailed visible: ${detailedTrails.visible}, Generalized visible: ${generalizedTrails.visible}`
-        );
-      }
+            // Create legend entries for each trail
+            const trailNames = [];
+            results.features.forEach(function (feature) {
+              const trailName = feature.attributes.Name;
 
-      // Function to set up layer styling
-      function setupLayerStyling(layer) {
-        return new Promise((resolve, reject) => {
-          // First check if the layer has loaded
-          if (!layer.loaded) {
-            console.log(`Layer ${layer.title} not yet loaded, waiting...`);
-            layer.when(
-              () => setupAndResolve(),
-              (error) => reject(`Failed to load layer ${layer.title}: ${error}`)
-            );
-          } else {
-            setupAndResolve();
-          }
+              // Skip duplicates
+              if (trailNames.includes(trailName)) return;
+              trailNames.push(trailName);
 
-          function setupAndResolve() {
-            // Query to get all unique trail names
-            layer
-              .queryFeatures({
-                where: "1=1",
-                outFields: ["Name"],
-                returnGeometry: false,
-                returnDistinctValues: true,
-              })
-              .then(function (results) {
-                console.log(`Got ${results.features.length} unique trails for ${layer.title}`);
+              // Get color for this trail
+              const color = getColorForTrail(trailName);
 
-                // Create renderer
-                const renderer = new UniqueValueRenderer({
-                  field: "Name",
-                  defaultSymbol: new SimpleLineSymbol({
-                    color: new Color("#666666"),
-                    width: "2px",
-                  }),
-                  uniqueValueInfos: [],
-                });
-
-                // If this is the detailed layer, build the legend
-                if (layer === detailedTrails) {
-                  const legendItems = document.getElementById("legend-items");
-                  if (!legendItems) {
-                    console.warn("Legend items container not found in DOM");
-                  } else {
-                    legendItems.innerHTML = ""; // Clear any existing items
-
-                    // Create legend entries for each trail
-                    const trailNames = [];
-                    results.features.forEach(function (feature) {
-                      const trailName = feature.attributes.Name;
-
-                      // Skip duplicates
-                      if (trailNames.includes(trailName)) return;
-                      trailNames.push(trailName);
-
-                      // Get color for this trail
-                      const color = getColorForTrail(trailName);
-
-                      // Add to renderer
-                      renderer.uniqueValueInfos.push({
-                        value: trailName,
-                        symbol: new SimpleLineSymbol({
-                          color: new Color(color),
-                          width: "2px",
-                        }),
-                      });
-
-                      // Add to legend UI
-                      const legendItem = document.createElement("div");
-                      legendItem.className = "legend-item";
-
-                      const colorBox = document.createElement("div");
-                      colorBox.className = "legend-color";
-                      colorBox.style.backgroundColor = color;
-
-                      const nameSpan = document.createElement("span");
-                      nameSpan.textContent = trailName;
-
-                      legendItem.appendChild(colorBox);
-                      legendItem.appendChild(nameSpan);
-                      legendItems.appendChild(legendItem);
-                    });
-
-                    // Show legend
-                    const legendElement = document.getElementById("legend");
-                    if (legendElement) {
-                      legendElement.style.display = "block";
-                    }
-                  }
-                }
-                // For generalized layer, reuse the same color assignments
-                else if (detailedTrails.renderer && detailedTrails.renderer.uniqueValueInfos) {
-                  // Get existing renderer info from detailed layer
-                  const detailedRendererInfo = detailedTrails.renderer.uniqueValueInfos;
-
-                  // Apply same styles to generalized layer
-                  detailedRendererInfo.forEach((info) => {
-                    renderer.uniqueValueInfos.push(info);
-                  });
-                } else {
-                  // If detailed layer renderer is not ready, create simple unique values
-                  results.features.forEach(function (feature) {
-                    const trailName = feature.attributes.Name;
-                    const color = getColorForTrail(trailName);
-
-                    renderer.uniqueValueInfos.push({
-                      value: trailName,
-                      symbol: new SimpleLineSymbol({
-                        color: new Color(color),
-                        width: "2px",
-                      }),
-                    });
-                  });
-                }
-
-                // Apply renderer to layer
-                layer.renderer = renderer;
-                resolve();
-              })
-              .catch((error) => {
-                console.error(`Error querying features for ${layer.title}:`, error);
-                reject(error);
+              // Add to renderer
+              renderer.uniqueValueInfos.push({
+                value: trailName,
+                symbol: new SimpleLineSymbol({
+                  color: new Color(color),
+                  width: "2px",
+                }),
               });
-          }
-        });
-      }
 
-      // Function to set up map interaction
-      function setupMapInteraction() {
+              // Add to legend UI
+              const legendItem = document.createElement("div");
+              legendItem.className = "legend-item";
+
+              const colorBox = document.createElement("div");
+              colorBox.className = "legend-color";
+              colorBox.style.backgroundColor = color;
+
+              const nameSpan = document.createElement("span");
+              nameSpan.textContent = trailName;
+
+              legendItem.appendChild(colorBox);
+              legendItem.appendChild(nameSpan);
+              legendItems.appendChild(legendItem);
+            });
+
+            // Apply renderer to trails
+            allTrails.renderer = renderer;
+
+            // Show legend
+            document.getElementById("legend").style.display = "block";
+          });
+
+        // Add trails layer to map
+        arcgisMap.map.add(allTrails);
+
         // Disable default popups
         arcgisMap.view.popup.autoOpenEnabled = false;
 
         // Add click event handler
         arcgisMap.view.on("click", (event) => {
-          arcgisMap.view
-            .hitTest(event)
-            .then((response) => {
-              // Determine which layer is currently visible
-              const activeLayer =
-                arcgisMap.view.scale <= SCALE_THRESHOLD ? detailedTrails : generalizedTrails;
-              console.log("Active layer on click:", activeLayer.title);
+          arcgisMap.view.hitTest(event).then((response) => {
+            // Find if a trail was clicked
+            const feature = response.results?.find((result) => result.graphic?.layer === allTrails);
 
-              // Find if a trail was clicked
-              const feature = response.results?.find(
-                (result) => result.graphic?.layer === activeLayer
-              );
+            if (feature) {
+              const attributes = feature.graphic.attributes;
+              selectedFeature = attributes;
 
-              if (feature) {
-                console.log("Trail clicked:", feature.graphic.attributes.Name);
-                const attributes = feature.graphic.attributes;
-                selectedFeature = attributes;
+              // Update info panel with trail details
+              document.getElementById("trail-title").textContent = attributes.Name;
+              document.getElementById(
+                "trail-length"
+              ).innerHTML = `<b>Length (Miles):</b> ${attributes.Length_Miles}`;
+              document.getElementById("trail-description").textContent =
+                attributes.Description ||
+                "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
 
-                // Update info panel with trail details
-                const titleElement = document.getElementById("trail-title");
-                const lengthElement = document.getElementById("trail-length");
-                const descriptionElement = document.getElementById("trail-description");
+              // Show info panel
+              document.getElementById("info-panel").style.right = "10px";
 
-                if (titleElement) titleElement.textContent = attributes.Name;
-                if (lengthElement)
-                  lengthElement.innerHTML = `<b>Length (Miles):</b> ${attributes.Length_Miles}`;
-                if (descriptionElement)
-                  descriptionElement.textContent =
-                    attributes.Description ||
-                    "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
+              // Set up zoom button
+              document.getElementById("zoom-button").onclick = () => zoomToFeature(feature.graphic);
 
-                // Show info panel
-                const infoPanel = document.getElementById("info-panel");
-                if (infoPanel) infoPanel.style.right = "10px";
+              // Filter to show only selected trail
+              filterToSelectedFeature(attributes.Name);
 
-                // Set up zoom button
-                const zoomButton = document.getElementById("zoom-button");
-                if (zoomButton) {
-                  zoomButton.onclick = () => zoomToFeature(feature.graphic);
-                }
-
-                // Filter both layers to show only selected trail
-                filterToSelectedFeature(attributes.Name);
-
-                // Zoom to trail
-                zoomToFeature(feature.graphic);
-              } else {
-                console.log("No trail feature found at click location");
-              }
-            })
-            .catch((error) => {
-              console.error("Error in hit test:", error);
-            });
+              // Zoom to trail
+              zoomToFeature(feature.graphic);
+            }
+          });
         });
-      }
+      });
 
       // Function to zoom to a trail
       function zoomToFeature(graphic) {
@@ -472,55 +322,40 @@
         }
       }
 
-      // Filter map to show only one trail on both layers
+      // Filter map to show only one trail
       function filterToSelectedFeature(trailName) {
         if (trailName) {
           // Save current filter value
-          const filterElement = document.getElementById("lengthFilter");
-          currentFilterValue = filterElement ? filterElement.value : null;
+          currentFilterValue = document.getElementById("lengthFilter").value;
 
-          // Apply filter to both layers
-          const filterExpression = `Name = '${trailName}'`;
-          detailedTrails.definitionExpression = filterExpression;
-          generalizedTrails.definitionExpression = filterExpression;
-          console.log("Applied filter for trail:", trailName);
+          // Apply filter to show only selected trail
+          allTrails.definitionExpression = `Name = '${trailName}'`;
         }
       }
 
       // Function to close info panel (called from HTML)
       window.closePanel = function () {
         // Hide panel
-        const infoPanel = document.getElementById("info-panel");
-        if (infoPanel) infoPanel.style.right = "-350px";
+        document.getElementById("info-panel").style.right = "-350px";
 
-        // Restore previous filter to both layers
+        // Restore previous filter
         if (currentFilterValue) {
-          const filterExpression = `Length_Miles >= ${currentFilterValue}`;
-          detailedTrails.definitionExpression = filterExpression;
-          generalizedTrails.definitionExpression = filterExpression;
+          allTrails.definitionExpression = `Length_Miles >= ${currentFilterValue}`;
         } else {
-          detailedTrails.definitionExpression = "";
-          generalizedTrails.definitionExpression = "";
+          allTrails.definitionExpression = "";
         }
 
         selectedFeature = null;
-        console.log("Panel closed, filter reset");
       };
 
       // Function to apply length filter (called from HTML)
       window.applyFilter = function () {
-        const filterElement = document.getElementById("lengthFilter");
-        if (!filterElement) return;
-
-        const minLength = filterElement.value;
+        const minLength = document.getElementById("lengthFilter").value;
         currentFilterValue = minLength;
 
         // Only apply if no trail selected
         if (!selectedFeature && minLength) {
-          const filterExpression = `Length_Miles >= ${minLength}`;
-          detailedTrails.definitionExpression = filterExpression;
-          generalizedTrails.definitionExpression = filterExpression;
-          console.log("Applied length filter:", minLength);
+          allTrails.definitionExpression = `Length_Miles >= ${minLength}`;
         }
       };
 
@@ -528,14 +363,11 @@
       window.resetFilter = function () {
         // Only reset if no trail selected
         if (!selectedFeature) {
-          detailedTrails.definitionExpression = "";
-          generalizedTrails.definitionExpression = "";
+          allTrails.definitionExpression = "";
         }
 
-        const filterElement = document.getElementById("lengthFilter");
-        if (filterElement) filterElement.value = "";
+        document.getElementById("lengthFilter").value = "";
         currentFilterValue = null;
-        console.log("Filter reset");
       };
     });
   </script>
