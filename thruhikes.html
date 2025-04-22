@@ -319,7 +319,6 @@
         // Add click event handler
         arcgisMap.view.on("click", (event) => {
           arcgisMap.view.hitTest(event).then((response) => {
-            // Find if a trail was clicked
             const feature = response.results?.find((result) => result.graphic?.layer === allTrails);
 
             if (feature) {
@@ -335,14 +334,10 @@
                 attributes.Description ||
                 "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
 
-              // Show info panel
               document.getElementById("info-panel").style.right = "10px";
-
-              // Set up zoom button
               document.getElementById("zoom-button").onclick = () => zoomToFeature(feature.graphic);
-
-              // Filter to show only selected trail
               filterToSelectedFeature(attributes.Name);
+              zoomToFeature(feature.graphic);
             }
           });
         });
