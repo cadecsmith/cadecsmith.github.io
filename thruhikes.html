@@ -40,6 +40,8 @@
       <div class="filter-section">
         <label for="lengthFilter">Minimum Length (miles):</label>
         <input type="number" id="lengthFilter" min="0" step="1" />
+        <label for="maxLengthFilter">Maximum Length (miles):</label>
+        <input type="number" id="maxLengthFilter" min="0" step="1" />
         <button onclick="applyFilter()">Filter</button>
         <button onclick="resetFilter()">Reset</button>
       </div>
@@ -170,6 +172,7 @@
       let allTrails;
       let selectedFeature = null;
       let currentFilterValue = null;
+      let currentMaxFilterValue = null;
 
       // Array of colors for different trails - lime (#bfef45) removed
       const trailColors = [
@@ -367,14 +370,27 @@
         }
       }
 
-      // Function to close info panel (called from HTML)
+      // close info panel (called from HTML)
       window.closePanel = function () {
-        // Hide panel
         document.getElementById("info-panel").style.right = "-350px";
 
-        // Restore previous filter
-        if (currentFilterValue) {
-          allTrails.definitionExpression = `Length_Miles >= ${currentFilterValue}`;
+        // restore previous filter
+        if (currentFilterValue || currentMaxFilterValue) {
+          let expression = "";
+
+          if (currentFilterValue && currentMaxFilterValue) {
+            expression = `Length_Miles >= ${currentFilterValue} AND Length_Miles <= ${currentMaxFilterValue}`;
+          } else if (currentFilterValue) {
+            expression = `Length_Miles >= ${currentFilterValue}`;
+          } else if (currentMaxFilterValue) {
+            expression = `Length_Miles <= ${currentMaxFilterValue}`;
+          }
+
+          if (expression) {
+            allTrails.definitionExpression = expression;
+          } else {
+            allTrails.definitionExpression = "";
+          }
         } else {
           allTrails.definitionExpression = "";
         }
@@ -385,23 +401,34 @@
       // Function to apply length filter (called from HTML)
       window.applyFilter = function () {
         const minLength = document.getElementById("lengthFilter").value;
+        const maxLength = document.getElementById("maxLengthFilter").value;
         currentFilterValue = minLength;
+        currentMaxFilterValue = maxLength;
 
-        // Only apply if no trail selected
-        if (!selectedFeature && minLength) {
+        if (minLength && maxLength) {
+          expression = `Length_Miles >= ${minLength} AND Length_Miles <= ${maxLength}`;
+        } else if (minLength) {
+          expression = `Length_Miles >= ${minLength}`;
+        } else if (maxLength) {
+          expression = `Length_Miles <= ${maxLength}`;
+        } else {
+          expression = null;
+        }
+        if (expression) {
           allTrails.definitionExpression = `Length_Miles >= ${minLength}`;
         }
       };
 
-      // Function to reset filter (called from HTML)
+      //reset filter (called from HTML)
       window.resetFilter = function () {
-        // Only reset if no trail selected
         if (!selectedFeature) {
           allTrails.definitionExpression = "";
         }
 
         document.getElementById("lengthFilter").value = "";
+        document.getElementById("maxLengthFilter").value = "";
         currentFilterValue = null;
+        currentMaxFilterValue = null;
       };
     });
   </script>
