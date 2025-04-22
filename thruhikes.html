@@ -166,21 +166,171 @@
       "esri/Graphic",
     ], (FeatureLayer, UniqueValueRenderer, SimpleLineSymbol, Color, Graphic) => {
       const arcgisMap = document.querySelector("arcgis-map");
-      let allTrails;
+      let generalizedTrails;
+      let detailedTrails;
+      let activeLayer;
       let selectedFeature = null;
       let currentFilterValue = null;
       let trailsList = [];
 
+      // Store trail total lengths
+      let trailTotalLengths = {};
+
+      // Scale threshold for switching between layers
+      const scaleThreshold = 500000;
+
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
-        // Create feature layer
-        allTrails = new FeatureLayer({
+        // Create generalized feature layer (for zoomed out view)
+        generalizedTrails = new FeatureLayer({
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Generalized/FeatureServer/0",
           outFields: ["*"],
           displayFilterEnabled: false,
+          visible: true,
         });
 
-        // query the layer to get all unique trail names
-        allTrails
+        // Create detailed feature layer (for zoomed in view)
+        detailedTrails = new FeatureLayer({
+          url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
+          outFields: ["*"],
+          displayFilterEnabled: false,
+          visible: false,
+        });
+
+        // Set active layer based on initial scale
+        activeLayer = arcgisMap.view.scale > scaleThreshold ? generalizedTrails : detailedTrails;
+        updateLayerVisibility();
+
+        // Calculate trail lengths (for the generalized trails)
+        calculateTrailTotalLengths().then(() => {
+          // Set up renderers for both layers
+          setupRenderer(generalizedTrails);
+          setupRenderer(detailedTrails);
+
+          // Add both layers to the map
+          arcgisMap.map.addMany([generalizedTrails, detailedTrails]);
+        });
+
+        // Disable default popup
+        arcgisMap.view.popup.autoOpenEnabled = false;
+        arcgisMap.view.popup.dockEnabled = false;
+
+        // Add scale change event listener to switch between layers
+        arcgisMap.view.watch("scale", function (newScale) {
+          // Switch active layer based on scale
+          activeLayer = newScale > scaleThreshold ? generalizedTrails : detailedTrails;
+          updateLayerVisibility();
+
+          // Apply existing filters to the newly active layer
+          applyCurrentFilters();
+        });
+
+        // Add click event to the view
+        arcgisMap.view.on("click", (event) => {
+          arcgisMap.view.hitTest(event).then((response) => {
+            const feature = response.results?.find(
+              (result) =>
+                result.graphic?.layer === generalizedTrails ||
+                result.graphic?.layer === detailedTrails
+            );
+
+            if (feature) {
+              const attributes = feature.graphic.attributes;
+              const trailName = attributes.Name;
+
+              // For generalized trails, use the calculated total length
+              if (feature.graphic.layer === generalizedTrails && trailTotalLengths[trailName]) {
+                attributes.Length_Miles = trailTotalLengths[trailName];
+              }
+
+              selectTrail(attributes, feature.graphic);
+            }
+          });
+        });
+      });
+
+      // Function to calculate total trail lengths by grouping segments
+      async function calculateTrailTotalLengths() {
+        try {
+          // Query all trails from the generalized layer
+          const results = await generalizedTrails.queryFeatures({
+            where: "1=1",
+            outFields: ["Name", "Shape__Length"], // Assuming Shape__Length is in meters
+            returnGeometry: false,
+          });
+
+          // Group by trail name and calculate total length
+          const trailLengths = {};
+
+          results.features.forEach((feature) => {
+            const name = feature.attributes.Name;
+            const segmentLength = feature.attributes.Shape__Length;
+
+            if (!name || !segmentLength) return;
+
+            if (!trailLengths[name]) {
+              trailLengths[name] = 0;
+            }
+
+            trailLengths[name] += segmentLength;
+          });
+
+          // Convert from meters to miles (1 meter = 0.000621371 miles)
+          for (const name in trailLengths) {
+            trailTotalLengths[name] = parseFloat((trailLengths[name] * 0.000621371).toFixed(2));
+          }
+
+          console.log("Trail total lengths calculated:", trailTotalLengths);
+        } catch (error) {
+          console.error("Error calculating trail lengths:", error);
+        }
+      }
+
+      // Function to update layer visibility based on active layer
+      function updateLayerVisibility() {
+        generalizedTrails.visible = activeLayer === generalizedTrails;
+        detailedTrails.visible = activeLayer === detailedTrails;
+      }
+
+      // Function to apply current filters to the active layer
+      function applyCurrentFilters() {
+        if (selectedFeature) {
+          // If a trail is selected, show only that trail
+          const trailName = selectedFeature.Name;
+
+          // For detailed trails, use server-side filtering
+          detailedTrails.definitionExpression = `Name = '${trailName}'`;
+
+          // For generalized trails, use server-side filtering
+          generalizedTrails.definitionExpression = `Name = '${trailName}'`;
+        } else if (currentFilterValue) {
+          // For detailed trails, we can use server-side filtering directly
+          detailedTrails.definitionExpression = `Length_Miles >= ${currentFilterValue}`;
+
+          // For generalized trails, we need to filter based on our calculated totals
+          // Get names of trails that meet the length criteria
+          const qualifyingTrails = Object.keys(trailTotalLengths).filter(
+            (name) => trailTotalLengths[name] >= currentFilterValue
+          );
+
+          if (qualifyingTrails.length > 0) {
+            // Create a WHERE clause with all qualifying trail names
+            const whereClause = qualifyingTrails.map((name) => `Name = '${name}'`).join(" OR ");
+            generalizedTrails.definitionExpression = whereClause;
+          } else {
+            // No trails meet the criteria, show none
+            generalizedTrails.definitionExpression = "1=0";
+          }
+        } else {
+          // No filters
+          generalizedTrails.definitionExpression = "";
+          detailedTrails.definitionExpression = "";
+        }
+      }
+
+      // Setup renderer for a layer
+      function setupRenderer(layer) {
+        // Query the layer to get all unique trail names
+        layer
           .queryFeatures({
             where: "1=1",
             outFields: ["Name"],
@@ -198,11 +348,12 @@
               uniqueValueInfos: [],
             });
 
-            // Create legend items container
-            const legendItems = document.getElementById("legend-items");
-
-            // Create datalist for search autocomplete
+            // Clear existing datalist for search autocomplete if this is the first layer processed
             const trailsDatalist = document.getElementById("trailsList");
+            if (layer === generalizedTrails) {
+              trailsDatalist.innerHTML = "";
+              trailsList = [];
+            }
 
             // Add unique value for each trail name
             results.features.forEach(function (feature) {
@@ -223,21 +374,6 @@
                 }),
               });
 
-              // Add to legend
-              const legendItem = document.createElement("div");
-              legendItem.className = "legend-item";
-
-              const colorBox = document.createElement("div");
-              colorBox.className = "legend-color";
-              colorBox.style.backgroundColor = color;
-
-              const nameSpan = document.createElement("span");
-              nameSpan.textContent = trailName;
-
-              legendItem.appendChild(colorBox);
-              legendItem.appendChild(nameSpan);
-              legendItems.appendChild(legendItem);
-
               // Add to search datalist
               const option = document.createElement("option");
               option.value = trailName;
@@ -248,43 +384,40 @@
             trailsList.sort();
 
             // Apply renderer
-            allTrails.renderer = renderer;
-
-            // Show legend
-            document.getElementById("legend").style.display = "block";
+            layer.renderer = renderer;
           });
+      }
 
-        arcgisMap.map.add(allTrails);
+      // Function to get color for a trail (ensure consistent colors across layers)
+      function getColorForTrail(trailName) {
+        // Simple hash function to generate a color based on the trail name
+        let hash = 0;
+        for (let i = 0; i < trailName.length; i++) {
+          hash = trailName.charCodeAt(i) + ((hash << 5) - hash);
+        }
 
-        // Disable default popup
-        arcgisMap.view.popup.autoOpenEnabled = false;
-        arcgisMap.view.popup.dockEnabled = false;
-
-        // Add click event to the view
-        arcgisMap.view.on("click", (event) => {
-          // Perform a hitTest to check if a feature was clicked
-          arcgisMap.view.hitTest(event).then((response) => {
-            const feature = response.results?.find((result) => result.graphic?.layer === allTrails);
-
-            if (feature) {
-              const attributes = feature.graphic.attributes;
-              selectTrail(attributes, feature.graphic);
-            }
-          });
-        });
-      });
+        // Convert to a color
+        const hue = Math.abs(hash) % 360;
+        return `hsl(${hue}, 70%, 45%)`;
+      }
 
       // Centralized function to select a trail by attributes and graphic
       function selectTrail(attributes, graphic) {
-        selectedFeature = attributes;
+        // Store selected feature with proper length
+        selectedFeature = { ...attributes };
+
+        // If from generalized layer, use the calculated total length if available
+        if (graphic.layer === generalizedTrails && trailTotalLengths[attributes.Name]) {
+          selectedFeature.Length_Miles = trailTotalLengths[attributes.Name];
+        }
 
         // Update the side panel with feature information
-        document.getElementById("trail-title").textContent = attributes.Name;
+        document.getElementById("trail-title").textContent = selectedFeature.Name;
         document.getElementById(
           "trail-length"
-        ).innerHTML = `<b>Length (Miles):</b> ${attributes.Length_Miles}`;
+        ).innerHTML = `<b>Length (Miles):</b> ${selectedFeature.Length_Miles}`;
         document.getElementById("trail-description").textContent =
-          attributes.Description ||
+          selectedFeature.Description ||
           "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
 
         // Show the side panel
@@ -293,8 +426,10 @@
         // Set up zoom button functionality
         document.getElementById("zoom-button").onclick = () => zoomToFeature(graphic);
 
-        // Filter to selected feature and zoom
-        filterToSelectedFeature(attributes.Name);
+        // Filter to selected feature on both layers
+        const trailName = selectedFeature.Name;
+        generalizedTrails.definitionExpression = `Name = '${trailName}'`;
+        detailedTrails.definitionExpression = `Name = '${trailName}'`;
 
         if (graphic) {
           zoomToFeature(graphic);
@@ -307,8 +442,8 @@
 
         if (!searchValue) return;
 
-        // Query the feature layer for the specified trail
-        allTrails
+        // Query the active feature layer for the specified trail
+        activeLayer
           .queryFeatures({
             where: `UPPER(Name) LIKE UPPER('%${searchValue}%')`,
             outFields: ["*"],
@@ -318,9 +453,15 @@
             if (results.features.length > 0) {
               // Get the first matching trail
               const feature = results.features[0];
+              const attributes = feature.attributes;
+
+              // If from generalized layer, use the calculated total length
+              if (activeLayer === generalizedTrails && trailTotalLengths[attributes.Name]) {
+                attributes.Length_Miles = trailTotalLengths[attributes.Name];
+              }
 
               // Select the trail
-              selectTrail(feature.attributes, feature);
+              selectTrail(attributes, feature);
             } else {
               alert("No trails found with that name. Please try again.");
             }
@@ -329,14 +470,6 @@
             console.error("Error searching for trail:", error);
           });
       };
-
-      // Add enter key functionality to search input
-      document.getElementById("searchInput").addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          window.searchTrail();
-        }
-      });
 
       function zoomToFeature(graphic) {
         // Zoom to the selected feature with some padding
@@ -353,48 +486,40 @@
         }
       }
 
-      function filterToSelectedFeature(trailName) {
-        if (trailName) {
-          // Store the current filter value for when we close the panel
-          currentFilterValue = document.getElementById("lengthFilter").value;
-
-          // Apply definition expression to show only the selected trail
-          allTrails.definitionExpression = `Name = '${trailName}'`;
-        }
-      }
-
       window.closePanel = function () {
         document.getElementById("info-panel").style.right = "-350px";
 
-        // Reset to previous length filter if there was one, or clear filter
-        if (currentFilterValue) {
-          allTrails.definitionExpression = `Length_Miles >= ${currentFilterValue}`;
-        } else {
-          allTrails.definitionExpression = "";
-        }
-
+        // Reset to previous length filter
+        applyCurrentFilters();
         selectedFeature = null;
       };
 
       window.applyFilter = function () {
         const minLength = document.getElementById("lengthFilter").value;
-        currentFilterValue = minLength;
 
-        // Don't apply length filter if a feature is selected
-        if (!selectedFeature && minLength) {
-          allTrails.definitionExpression = `Length_Miles >= ${minLength}`;
+        if (minLength) {
+          currentFilterValue = parseFloat(minLength);
+          applyCurrentFilters();
         }
       };
 
       window.resetFilter = function () {
-        // Don't reset filter if a feature is selected
-        if (!selectedFeature) {
-          allTrails.definitionExpression = "";
-        }
-
         document.getElementById("lengthFilter").value = "";
         currentFilterValue = null;
+
+        if (!selectedFeature) {
+          generalizedTrails.definitionExpression = "";
+          detailedTrails.definitionExpression = "";
+        }
       };
+
+      // Add enter key functionality to search input
+      document.getElementById("searchInput").addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          window.searchTrail();
+        }
+      });
     });
   </script>
 </html>
