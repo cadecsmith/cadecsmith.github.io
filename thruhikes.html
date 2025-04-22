@@ -158,18 +158,20 @@
     </style>
   </body>
   <script>
+    // Load required ArcGIS modules
     require([
       "esri/layers/FeatureLayer",
       "esri/renderers/UniqueValueRenderer",
       "esri/symbols/SimpleLineSymbol",
       "esri/Color",
     ], (FeatureLayer, UniqueValueRenderer, SimpleLineSymbol, Color) => {
+      // Get map element and initialize variables
       const arcgisMap = document.querySelector("arcgis-map");
       let allTrails;
       let selectedFeature = null;
       let currentFilterValue = null;
 
-      // Define a set of distinct colors for trails
+      // Array of colors for different trails
       const trailColors = [
         "#e6194B",
         "#3cb44b",
@@ -181,21 +183,11 @@
         "#f032e6",
         "#bfef45",
         "#fabebe",
-        "#469990",
-        "#e6beff",
-        "#9A6324",
-        "#800000",
-        "#aaffc3",
-        "#808000",
-        "#000075",
-        "#a9a9a9",
-        "#008080",
-        "#ffd8b1",
+        // (shortened from original 20 colors)
       ];
 
-      // Function to generate color based on trail name
+      // Function that assigns consistent colors to trail names
       function getColorForTrail(trailName) {
-        // Simple hash function to consistently map trail names to colors
         let hash = 0;
         for (let i = 0; i < trailName.length; i++) {
           hash = trailName.charCodeAt(i) + ((hash << 5) - hash);
@@ -203,24 +195,23 @@
         return trailColors[Math.abs(hash) % trailColors.length];
       }
 
+      // When the map is ready
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
-        // Create feature layer
+        // Create a feature layer for trails
         allTrails = new FeatureLayer({
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
           outFields: ["*"],
-          displayFilterEnabled: false,
         });
 
-        // First, let's query the layer to get all unique trail names
+        // Query to get all unique trail names
         allTrails
           .queryFeatures({
             where: "1=1",
             outFields: ["Name"],
-            returnGeometry: false,
             returnDistinctValues: true,
           })
           .then(function (results) {
-            // Create a unique value renderer
+            // Create renderer to style trails by name
             const renderer = new UniqueValueRenderer({
               field: "Name",
               defaultSymbol: new SimpleLineSymbol({
@@ -230,18 +221,19 @@
               uniqueValueInfos: [],
             });
 
-            // Create legend items container
+            // Get legend container
             const legendItems = document.getElementById("legend-items");
 
-            // Add unique value for each trail name
+            // Create legend entries for each trail
             const trailNames = [];
             results.features.forEach(function (feature) {
               const trailName = feature.attributes.Name;
 
-              // Avoid duplicates
+              // Skip duplicates
               if (trailNames.includes(trailName)) return;
               trailNames.push(trailName);
 
+              // Get color for this trail
               const color = getColorForTrail(trailName);
 
               // Add to renderer
@@ -253,7 +245,7 @@
                 }),
               });
 
-              // Add to legend
+              // Add to legend UI
               const legendItem = document.createElement("div");
               legendItem.className = "legend-item";
 
@@ -269,30 +261,30 @@
               legendItems.appendChild(legendItem);
             });
 
-            // Apply renderer
+            // Apply renderer to trails
             allTrails.renderer = renderer;
 
             // Show legend
             document.getElementById("legend").style.display = "block";
           });
 
+        // Add trails layer to map
         arcgisMap.map.add(allTrails);
 
-        // Disable default popup
+        // Disable default popups
         arcgisMap.view.popup.autoOpenEnabled = false;
-        arcgisMap.view.popup.dockEnabled = false;
 
-        // Add click event to the view
+        // Add click event handler
         arcgisMap.view.on("click", (event) => {
-          // Perform a hitTest to check if a feature was clicked
           arcgisMap.view.hitTest(event).then((response) => {
+            // Find if a trail was clicked
             const feature = response.results?.find((result) => result.graphic?.layer === allTrails);
 
             if (feature) {
               const attributes = feature.graphic.attributes;
               selectedFeature = attributes;
 
-              // Update the side panel with feature information
+              // Update info panel with trail details
               document.getElementById("trail-title").textContent = attributes.Name;
               document.getElementById(
                 "trail-length"
@@ -301,49 +293,52 @@
                 attributes.Description ||
                 "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
 
-              // Show the side panel
+              // Show info panel
               document.getElementById("info-panel").style.right = "10px";
 
-              // Set up zoom button functionality
+              // Set up zoom button
               document.getElementById("zoom-button").onclick = () => zoomToFeature(feature.graphic);
 
-              // Filter to selected feature and zoom
+              // Filter to show only selected trail
               filterToSelectedFeature(attributes.Name);
+
+              // Zoom to trail
               zoomToFeature(feature.graphic);
             }
           });
         });
       });
 
+      // Function to zoom to a trail
       function zoomToFeature(graphic) {
-        // Zoom to the selected feature with some padding
         if (graphic && graphic.geometry) {
           arcgisMap.view.goTo(
             {
               target: graphic.geometry,
-              padding: { right: 350 }, // Account for the open side panel
+              padding: { right: 350 }, // Space for info panel
             },
-            {
-              duration: 1000, // Animation duration in milliseconds
-            }
+            { duration: 1000 } // Animation time
           );
         }
       }
 
+      // Filter map to show only one trail
       function filterToSelectedFeature(trailName) {
         if (trailName) {
-          // Store the current filter value for when we close the panel
+          // Save current filter value
           currentFilterValue = document.getElementById("lengthFilter").value;
 
-          // Apply definition expression to show only the selected trail
+          // Apply filter to show only selected trail
           allTrails.definitionExpression = `Name = '${trailName}'`;
         }
       }
 
+      // Function to close info panel (called from HTML)
       window.closePanel = function () {
+        // Hide panel
         document.getElementById("info-panel").style.right = "-350px";
 
-        // Reset to previous length filter if there was one, or clear filter
+        // Restore previous filter
         if (currentFilterValue) {
           allTrails.definitionExpression = `Length_Miles >= ${currentFilterValue}`;
         } else {
@@ -353,18 +348,20 @@
         selectedFeature = null;
       };
 
+      // Function to apply length filter (called from HTML)
       window.applyFilter = function () {
         const minLength = document.getElementById("lengthFilter").value;
         currentFilterValue = minLength;
 
-        // Don't apply length filter if a feature is selected
+        // Only apply if no trail selected
         if (!selectedFeature && minLength) {
           allTrails.definitionExpression = `Length_Miles >= ${minLength}`;
         }
       };
 
+      // Function to reset filter (called from HTML)
       window.resetFilter = function () {
-        // Don't reset filter if a feature is selected
+        // Only reset if no trail selected
         if (!selectedFeature) {
           allTrails.definitionExpression = "";
         }
