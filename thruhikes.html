@@ -117,7 +117,7 @@
       #info-panel {
         position: absolute;
         top: 65px;
-        right: -350px; /* H\hidden by default, now on right side */
+        right: -350px; /* Hidden by default, now on right side */
         width: 300px;
         max-height: 60%; /* Not full height */
         background: rgba(255, 255, 255, 0.9);
@@ -171,12 +171,90 @@
       let selectedFeature = null;
       let currentFilterValue = null;
 
+      // Array of colors for different trails
+      const trailColors = [
+        "#e6194B", // Red
+        "#3cb44b", // Green
+        "#ffe119", // Yellow
+        "#4363d8", // Blue
+        "#f58231", // Orange
+        "#911eb4", // Purple
+        "#42d4f4", // Cyan
+        "#f032e6", // Magenta
+        "#bfef45", // Lime
+        "#fabebe", // Pink
+        "#469990", // Teal
+        "#e6beff", // Lavender
+        "#9A6324", // Brown
+        "#800000", // Maroon
+        "#aaffc3", // Mint
+        "#808000", // Olive
+        "#ffd8b1", // Apricot
+        "#000075", // Navy
+        "#a9a9a9", // Grey
+        "#ff7b00", // Dark Orange
+      ];
+
+      // Function that assigns consistent colors to trail names
+      function getColorForTrail(trailName) {
+        let hash = 0;
+        for (let i = 0; i < trailName.length; i++) {
+          hash = trailName.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return trailColors[Math.abs(hash) % trailColors.length];
+      }
+
+      // Function to search for a trail by name
+      window.searchTrail = function () {
+        const searchValue = document.getElementById("searchInput").value.trim();
+
+        if (searchValue === "") return;
+
+        // Query for the specific trail
+        const query = allTrails.createQuery();
+        query.where = `UPPER(Name) LIKE UPPER('%${searchValue}%')`;
+        query.returnGeometry = true;
+        query.outFields = ["*"];
+
+        allTrails.queryFeatures(query).then((result) => {
+          if (result.features.length > 0) {
+            const feature = result.features[0];
+            const attributes = feature.attributes;
+            selectedFeature = attributes;
+
+            // Update info panel
+            document.getElementById("trail-title").textContent = attributes.Name;
+            document.getElementById(
+              "trail-length"
+            ).innerHTML = `<b>Length (Miles):</b> ${attributes.Length_Miles}`;
+            document.getElementById("trail-description").textContent =
+              attributes.Description ||
+              "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
+
+            // Show info panel
+            document.getElementById("info-panel").style.right = "10px";
+
+            // Set zoom button
+            document.getElementById("zoom-button").onclick = () => zoomToFeature(feature);
+
+            // Filter map to show only this trail
+            filterToSelectedFeature(attributes.Name);
+
+            // Zoom to trail
+            zoomToFeature(feature);
+          } else {
+            alert("No trails found with that name.");
+          }
+        });
+      };
+
       // When the map is ready
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
         // Create a feature layer for trails
         allTrails = new FeatureLayer({
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
           outFields: ["*"],
+          definitionExpression: "1=1", // Show all trails initially
         });
 
         // Query to get all unique trail names
@@ -185,6 +263,7 @@
             where: "1=1",
             outFields: ["Name"],
             returnDistinctValues: true,
+            orderByFields: ["Name"],
           })
           .then(function (results) {
             // Create renderer to style trails by name
@@ -197,17 +276,22 @@
               uniqueValueInfos: [],
             });
 
-            // Get legend container
-            const legendItems = document.getElementById("legend-items");
+            // Create datalist options for search
+            const trailsList = document.getElementById("trailsList");
 
-            // Create legend entries for each trail
+            // Process each trail
             const trailNames = [];
             results.features.forEach(function (feature) {
               const trailName = feature.attributes.Name;
 
-              // Skip duplicates
-              if (trailNames.includes(trailName)) return;
+              // Skip duplicates or empty names
+              if (!trailName || trailNames.includes(trailName)) return;
               trailNames.push(trailName);
+
+              // Add to datalist for search
+              const option = document.createElement("option");
+              option.value = trailName;
+              trailsList.appendChild(option);
 
               // Get color for this trail
               const color = getColorForTrail(trailName);
@@ -217,31 +301,14 @@
                 value: trailName,
                 symbol: new SimpleLineSymbol({
                   color: new Color(color),
-                  width: "2px",
+                  width: "3px", // Make lines a bit thicker for visibility
                 }),
+                label: trailName,
               });
-
-              // Add to legend UI
-              const legendItem = document.createElement("div");
-              legendItem.className = "legend-item";
-
-              const colorBox = document.createElement("div");
-              colorBox.className = "legend-color";
-              colorBox.style.backgroundColor = color;
-
-              const nameSpan = document.createElement("span");
-              nameSpan.textContent = trailName;
-
-              legendItem.appendChild(colorBox);
-              legendItem.appendChild(nameSpan);
-              legendItems.appendChild(legendItem);
             });
 
-            // Apply renderer to trails
+            // Apply renderer to trails layer
             allTrails.renderer = renderer;
-
-            // Show legend
-            document.getElementById("legend").style.display = "block";
           });
 
         // Add trails layer to map
@@ -277,9 +344,6 @@
 
               // Filter to show only selected trail
               filterToSelectedFeature(attributes.Name);
-
-              // Zoom to trail
-              zoomToFeature(feature.graphic);
             }
           });
         });
