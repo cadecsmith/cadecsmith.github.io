@@ -56,6 +56,8 @@
         </div>
       </div>
     </div>
+
+    <!-- introduction panel (maybe fix this)-->
     <div id="intro-panel">
       <p>
         Thru-hiking is the act of hiking a long distance trail end-to-end in one trip, usually over
@@ -77,6 +79,8 @@
         am working to find a resolution to this issue and it should be updated soon.
       </p>
     </div>
+
+    <!-- popup info div-->
     <div id="info-panel">
       <button id="close-button" onclick="closePanel()">✖</button>
       <h2 id="trail-title">Trail Name</h2>
@@ -148,7 +152,7 @@
       #info-panel {
         position: absolute;
         top: 75px;
-        right: -350px; /* Hidden by default, now on right side */
+        right: -350px;
         width: 300px;
         max-height: 60%;
         background: rgba(255, 255, 255, 0.9);
@@ -247,16 +251,14 @@
         color: #005a8d;
       }
     </style>
+    <!-- introduction thing -->
     <script>
-      // Your new intro panel JavaScript here
       document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("explore-button").addEventListener("click", function (e) {
           e.preventDefault();
 
-          // Hide intro panel
           document.getElementById("intro-panel").style.display = "none";
 
-          // Show filter panel
           document.getElementById("filter-panel").style.display = "block";
         });
       });
@@ -269,7 +271,7 @@
       "esri/symbols/SimpleLineSymbol",
       "esri/Color",
     ], (FeatureLayer, UniqueValueRenderer, SimpleLineSymbol, Color) => {
-      // Get map element and initialize variables
+      // get map element
       const arcgisMap = document.querySelector("arcgis-map");
       let allTrails;
       let selectedFeature = null;
@@ -337,6 +339,7 @@
         });
       };
 
+      // add event listener to map to load trails layer when ready
       arcgisMap.addEventListener("arcgisViewReadyChange", () => {
         allTrails = new FeatureLayer({
           url: "https://services.arcgis.com/FvF9MZKp3JWPrSkg/arcgis/rest/services/Trails_Merged/FeatureServer/0",
@@ -344,7 +347,7 @@
           definitionExpression: "1=1",
         });
 
-        // Query to get all unique trail names
+        //query to get all unique trail names
         allTrails
           .queryFeatures({
             where: "1=1",
@@ -363,10 +366,8 @@
               uniqueValueInfos: [],
             });
 
-            // Create datalist options for search
             const trailsList = document.getElementById("trailsList");
 
-            // Process each trail
             const trailNames = [];
             results.features.forEach(function (feature) {
               const trailName = feature.attributes.Name;
@@ -374,7 +375,6 @@
               if (!trailName || trailNames.includes(trailName)) return;
               trailNames.push(trailName);
 
-              // Add to datalist for search
               const option = document.createElement("option");
               option.value = trailName;
               trailsList.appendChild(option);
@@ -459,7 +459,7 @@
         document.getElementById("trail-website").innerText = "Official Website";
       }
 
-      // Filter map to show only the selected trail
+      // filter map to show only the selected trail
       function filterToSelectedFeature(trailName) {
         if (trailName) {
           currentFilterValue = document.getElementById("lengthFilter").value;
