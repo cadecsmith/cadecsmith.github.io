@@ -56,6 +56,22 @@
         </div>
       </div>
     </div>
+    <div id="intro-panel">
+      <p>
+        Thru-hiking is the act of hiking a long distance trail end-to-end in one trip, usually over
+        multiple days, weeks, or even months. The United States is home to several iconic
+        thru-hikes, from the famous Appalachian Trail to the rugged Pacific Crest Trail.
+      </p>
+      <p>
+        This map showcases America's major thru-hiking trails, their routes, and key information
+        about each trail
+      </p>
+      <p>
+        When you're ready,
+        <a href="#" id="explore-button">click here to explore and filter the trails</a>
+      </p>
+      <p>Click on a trail to see its details, or use the search bar to find a specific trail.</p>
+    </div>
     <div id="info-panel">
       <button id="close-button" onclick="closePanel()">✖</button>
       <h2 id="trail-title">Trail Name</h2>
@@ -157,7 +173,57 @@
       #zoom-button:hover {
         background: #005a8d;
       }
+
+      #intro-panel {
+        position: absolute;
+        top: 65px;
+        left: 10px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        font-size: 14px;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        width: 320px;
+        max-height: 60%;
+        max-width: 90%;
+        overflow-y: auto;
+      }
+
+      #intro-panel p {
+        margin: 0 0 10px 0;
+        line-height: 1.4;
+      }
+
+      #intro-panel p:last-child {
+        margin-bottom: 0;
+      }
+
+      #explore-button {
+        color: #0079c1;
+        text-decoration: underline;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      #explore-button:hover {
+        color: #005a8d;
+      }
     </style>
+    <script>
+      // Your new intro panel JavaScript here
+      document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("explore-button").addEventListener("click", function (e) {
+          e.preventDefault();
+
+          // Hide intro panel
+          document.getElementById("intro-panel").style.display = "none";
+
+          // Show filter panel
+          document.getElementById("filter-panel").style.display = "block";
+        });
+      });
+    </script>
   </body>
   <script>
     require([
