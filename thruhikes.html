@@ -75,8 +75,16 @@
     <div id="info-panel">
       <button id="close-button" onclick="closePanel()">✖</button>
       <h2 id="trail-title">Trail Name</h2>
+      <p id="trail-difficulty"><b>Difficulty:</b></p>
       <p id="trail-length"><b>Length (Miles):</b></p>
+      <p id="trail-best-time"><b>Best Time to Hike:</b></p>
+      <p id="trail-completion-time">Typical Completion Time:</p>
+      <p id="fastest-time"><b>Fastest Known Time:</b></p>
       <p id="trail-description"></p>
+      <p id="trail-website-container">
+        <a id="trail-website" href="#" target="_blank">Official Website</a>
+      </p>
+      <div id="trail-image-container"></div>
       <button id="zoom-button">Zoom to Trail</button>
     </div>
     <arcgis-map basemap="arcgis/topographic" center="-98.5795, 39.8283" zoom="4.5">
@@ -209,6 +217,30 @@
       #explore-button:hover {
         color: #005a8d;
       }
+
+      #trail-image-container {
+        margin: 10px 0;
+        text-align: center;
+      }
+
+      #trail-image-container img {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 5px;
+      }
+
+      #trail-website-container {
+        margin-top: 10px;
+      }
+
+      #trail-website {
+        color: #0079c1;
+        text-decoration: underline;
+      }
+
+      #trail-website:hover {
+        color: #005a8d;
+      }
     </style>
     <script>
       // Your new intro panel JavaScript here
@@ -288,21 +320,11 @@
             const attributes = feature.attributes;
             selectedFeature = attributes;
 
-            document.getElementById("trail-title").textContent = attributes.Name;
-            document.getElementById(
-              "trail-length"
-            ).innerHTML = `<b>Length (Miles):</b> ${attributes.Length_Miles}`;
-            document.getElementById("trail-description").textContent =
-              attributes.Description ||
-              "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
-
+            populateInfoPanel(attributes, feature);
             document.getElementById("info-panel").style.right = "10px";
-
-            document.getElementById("zoom-button").onclick = () => zoomToFeature(feature);
-
             filterToSelectedFeature(attributes.Name);
 
-            // Zoom to trail
+            // zoom to trail
             zoomToFeature(feature);
           } else {
             alert("No trails found with that name.");
@@ -382,17 +404,10 @@
               const attributes = feature.graphic.attributes;
               selectedFeature = attributes;
 
-              // Update info panel with trail details
-              document.getElementById("trail-title").textContent = attributes.Name;
-              document.getElementById(
-                "trail-length"
-              ).innerHTML = `<b>Length (Miles):</b> ${attributes.Length_Miles}`;
-              document.getElementById("trail-description").textContent =
-                attributes.Description ||
-                "This famous thru-hiking trail offers beautiful scenery and challenging terrain.";
+              populateInfoPanel(attributes, feature.graphic);
 
               document.getElementById("info-panel").style.right = "10px";
-              document.getElementById("zoom-button").onclick = () => zoomToFeature(feature.graphic);
+
               filterToSelectedFeature(attributes.Name);
               zoomToFeature(feature.graphic);
             }
@@ -400,7 +415,7 @@
         });
       });
 
-      // Function to zoom to a trail
+      // zoom to trail
       function zoomToFeature(graphic) {
         if (graphic && graphic.geometry) {
           arcgisMap.view.goTo(
@@ -411,6 +426,38 @@
             { duration: 1000 }
           );
         }
+      }
+
+      // function to populate the info panel with trail details
+      function populateInfoPanel(attributes, graphic) {
+        document.getElementById("trail-title").innerText = attributes.Name || "Unknown Trail";
+        document.getElementById("trail-difficulty").innerText = `Difficulty: ${
+          attributes.Difficulty || "N/A"
+        }`;
+        document.getElementById("trail-length").innerText = `Length (Miles): ${
+          attributes.Length_Miles || "N/A"
+        }`;
+        document.getElementById("trail-best-time").innerText = `Best Time to Hike: ${
+          attributes.Best_Time_to_Hike || "N/A"
+        }`;
+        document.getElementById("trail-completion-time").innerText = `Typical Completion Time: ${
+          attributes.Typical_Completion_Time || "N/A"
+        }`;
+        document.getElementById("fastest-time").innerText = `Fastest Known Time: ${
+          attributes.Fastest_Known_Time || "N/A"
+        }`;
+        document.getElementById("trail-description").innerText =
+          attributes.Description || "No description available.";
+
+        const websiteLink = attributes.Website ? attributes.Website : "#";
+        document.getElementById("trail-website").setAttribute("href", websiteLink);
+        document.getElementById("trail-website").innerText = "Official Website";
+
+        const imageUrl = attributes.Image_URL
+          ? attributes.Image_URL
+          : "https://via.placeholder.com/300x200.png?text=No+Image+Available";
+        const imageContainer = document.getElementById("trail-image-container");
+        imageContainer.innerHTML = `<img src="${imageUrl}" alt="${attributes.Name} Image">`;
       }
 
       // Filter map to show only the selected trail
