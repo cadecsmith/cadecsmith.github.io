@@ -500,15 +500,13 @@
         const minLengthValue = document.getElementById("lengthFilter").value.trim();
         const maxLengthValue = document.getElementById("maxLengthFilter").value.trim();
 
-        // Parse values as numbers if present
         const minLength = minLengthValue ? parseFloat(minLengthValue) : null;
         const maxLength = maxLengthValue ? parseFloat(maxLengthValue) : null;
 
-        // Store current filter values
         currentFilterValue = minLength;
         currentMaxFilterValue = maxLength;
 
-        // Only apply if no trail selected
+        // only apply if no trail selected
         if (!selectedFeature) {
           let expression = "";
 
