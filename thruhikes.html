@@ -458,12 +458,6 @@
         document.getElementById("trail-website").setAttribute("href", websiteLink);
         document.getElementById("trail-website").innerText = "Official Website";
 
-        const imageUrl = attributes.Image_URL
-          ? attributes.Image_URL
-          : "https://via.placeholder.com/300x200.png?text=No+Image+Available";
-        const imageContainer = document.getElementById("trail-image-container");
-        imageContainer.innerHTML = `<img src="${imageUrl}" alt="${attributes.Name} Image">`;
-      }
 
       // Filter map to show only the selected trail
       function filterToSelectedFeature(trailName) {
