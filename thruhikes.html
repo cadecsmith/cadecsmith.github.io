@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -42,7 +42,7 @@
         <input type="number" id="lengthFilter" min="0" step="1" />
         <label for="maxLengthFilter">Maximum Length (miles):</label>
         <input type="number" id="maxLengthFilter" min="0" step="1" />
-        <button onclick="applyFilter()">Filter</button>
+        <button on="applyFilter()">Filter</button>
         <button onclick="resetFilter()">Reset</button>
       </div>
 
@@ -428,7 +428,7 @@
               target: graphic.geometry,
               padding: { right: 350 },
             },
-            { duration: 1000 }
+            { duration: 1000 },
           );
         }
       }
@@ -517,7 +517,7 @@
           } else if (maxLength !== null) {
             expression = `Length_Miles <= ${maxLength}`;
           } else {
-            expression = "1=1"; // Show all trails if no filters
+            expression = "1=1"; // all trails if no filters
           }
 
           console.log("Filter expression:", expression); // Debug: log the expression
